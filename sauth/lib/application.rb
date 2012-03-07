@@ -1,16 +1,11 @@
 class Application < ActiveRecord::Base
-	attr_accessor :encode;
-	attr_reader :url;
-	
-	#Constructor
-	def initialize
-		super;
-		@encode=Digest::SHA1.new; #SHA1 object instance
-	end
+	#Link with apps table
+	has_many :app_users;
+	has_many :users, :through => :app_users;
 	
 	#Url correction
 	def url=(url)
-		@url=(url[0,"http://".length] == "http://")?url:("http://" + url);
+		write_attribute(:url,(url[0,"http://".length] == "http://")?url:("http://" + url));
 	end
 	
 	#Check if attributes are correctly defined

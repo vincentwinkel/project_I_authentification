@@ -7,8 +7,6 @@ class CreateTableApplications < ActiveRecord::Migration
   end
 
   def down
-    remove_column :applications, :name;
-    remove_column :applications, :url;
     destroy_table :applications;
   end
 end

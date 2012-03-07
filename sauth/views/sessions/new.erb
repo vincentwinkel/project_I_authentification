@@ -3,17 +3,19 @@
 	<head>
 		<title>Connexion</title>
 		<style type="text/css">
-			* { text-shadow: 1px 1px 0 rgb(255,255,255); }
 			body { background: rgb(250,250,250); }
+			h1 { margin-bottom: 0; padding-bototm: 0; }
 			a { text-decoration: none; color: rgb(68,130,188); }
 			a:hover { color: rgb(224,150,45); }
-			#zone { width: 500px; padding: 5px; background: rgb(240,240,240); border: 1px solid rgb(200,200,200); }
+			#zone { width: 500px; margin-top: 20px; margin-bottom: 20px; padding: 5px; background: rgb(240,240,240); border: 1px solid rgb(200,200,200); }
 		</style>
 	</head>
 	<body>
 		<h1>Connexion</h1>
-		<div id="zone">
+		Service d'authentification
+		<div id="zone" style="margin-bottom: 20px;">
 			<form action="/sessions" method="post">
+				<input type="hidden" name="origin" value="http://app_cliente/protect" />
 				<table border="0">
 					<tr>
 						<td><label for="session_login">Pseudonyme : </label></td>
@@ -26,6 +28,10 @@
 					<tr><td></td><td><input name="commit" type="submit" value="Valider" /></td></tr>
 				</table>
 			</form>
+			Ou bien <a href="/register">s'inscrire</a>
+		</div>
+		<div id="zone">
+			Webmasters, vous pouvez <a href="/apps/new">ajouter votre application</a> &agrave; ce service.
 		</div>
 	</body>
 </html>

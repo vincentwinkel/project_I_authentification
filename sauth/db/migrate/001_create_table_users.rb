@@ -7,8 +7,6 @@ class CreateTableUsers < ActiveRecord::Migration
 	end
 
 	def down
-	remove_column :users, :login;
-	remove_column :users, :password;
 	destroy_table :users;
 	end
 end

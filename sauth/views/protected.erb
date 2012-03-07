@@ -1,21 +1,23 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Zone protégée du service d'authentification</title>
+		<title>Zone protégée</title>
 		<style type="text/css">
 			body { background: rgb(250,250,250); }
+			h1 { margin-bottom: 0; padding-bototm: 0; }
 			a { text-decoration: none; color: rgb(68,130,188); }
 			a:hover { color: rgb(224,150,45); }
-			#zone { width: 500px; padding: 5px; background: rgb(240,240,240); border: 1px solid rgb(200,200,200); }
+			#zone { width: 500px; margin-top: 20px; margin-bottom: 20px; padding: 5px; background: rgb(240,240,240); border: 1px solid rgb(200,200,200); }
 		</style>
 	</head>
 	<body>
-		<h1>Zone protégée du service d'authentification</h1>
+		<h1>Zone protégée</h1>
+		Service d'authentification
 		<div id="zone">
 			Bienvenue dans votre zone protégée, <%= session[env["rack.session.id"]] %>.<br />
 			<br />
 			<strong>Liste des applications utilisant votre compte :</strong><br />
-			<a href="" target="_blank">Blabla</a> (lien externe)<br />
+			- <a href="">Blabla</a><br />
 			<br />
 			<a href="sessions/id">Se deconnecter</a>
 		</div>

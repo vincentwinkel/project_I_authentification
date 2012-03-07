@@ -4,7 +4,7 @@ require 'user'
 describe User do
 	before(:each) do
 		@u=User.new();
-		@crypt="11111111111111111111111111111111";
+		@crypt="00d70c561892a94980befd12a400e26aeb4b8599";
 		@u.encode.stub(:hexdigest).and_return(@crypt);
 	end
 	it "should be invalid (any login + any password)" do
