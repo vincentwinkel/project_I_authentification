@@ -10,5 +10,7 @@ class Application < ActiveRecord::Base
 	
 	#Check if attributes are correctly defined
 	validates :name, :presence => true;
+	validates :name, :uniqueness => true;
+	validates :url, :uniqueness => true;
 	validates :url, :format => { :with => /^http:\/\/[^\s]+$/i, :on => :create };
 end

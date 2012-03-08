@@ -23,5 +23,6 @@ class User < ActiveRecord::Base
 	
 	#Check if attributes are correctly defined
 	validates :login, :presence => true;
+	validates :login, :uniqueness => true;
 	validates :password, :format => { :with => /^[a-z0-9]{40}$/i, :on => :create };
 end
