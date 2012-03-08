@@ -18,6 +18,8 @@ set :form_values, Hash.new; #Form values (to keep corrects values if error(s) oc
 set :form_errors, Hash.new; #Form errors (ex: input empty)
 
 set :ERROR_FORM_ANY_LOGIN, "Pseudonyme manquant";
+set :ERROR_FORM_BAD_LOGIN, "Pseudonyme indisponible";
+set :ERROR_FORM_NO_LOGIN, "Pseudonyme inexistant";
 set :ERROR_FORM_ANY_PASS, "Mot de passe manquant";
 set :ERROR_FORM_BAD_PASS_CONFIRM, "Mauvaise confirmation";
 
@@ -47,7 +49,7 @@ get %r{^/register$}i do
 		redirect "/protected";
 	#Else, print user inscription page
 	else
-		erb :"/register", :locals => { :form_errors => Hash.new,:form_values => Hash.new };
+		erb :"/register", :locals => {:form_errors => Hash.new,:form_values => Hash.new};
 	end
 end
 
@@ -135,7 +137,7 @@ post %r{^/register$}i do
 			:form_errors => settings.form_errors,
 			:form_values => settings.form_values
 		};
-	#Else if any error, check validity of the account
+	#Else if any error, check the validity of the account
 	else
 		u=User.new;
 		u.login=params["login"];
@@ -145,21 +147,56 @@ post %r{^/register$}i do
 			u.save;
 			session[env["rack.session.id"]]=params["login"];
 			redirect "/protected";
-		#Else, redirect to the connection page
+		#Else, the login already exists
 		else
-			redirect "/sessions/new";
+			settings.form_errors["login"]=settings.ERROR_FORM_BAD_LOGIN;
+			erb :"/register", :locals => {
+				:form_errors => settings.form_errors,
+				:form_values => settings.form_values
+			};
 		end
 	end
 end
 
 #Connection form
-post %r{^/sessions$}i do
-	if ((params["login"] == "titi") && (params["password"] == "toto")) then
-		session[env["rack.session.id"]]=params["login"];
-		redirect "/protected";
-	#Else, retry and show errors
+post %r{^/sessions/new$}i do
+	error=false; #true if an error occurred, else false
+	#Check form errors
+	settings.form_values.clear;
+	settings.form_errors.clear;
+	if ((params["login"].nil?) || (params["login"].empty?)) then
+		settings.form_errors["login"]=settings.ERROR_FORM_ANY_LOGIN;
+		error=true;
 	else
-		redirect "/sessions/new";
+		settings.form_values["login"]=params["login"];
+	end
+	if ((params["password"].nil?) || (params["password"].empty?)) then
+		settings.form_errors["password"]=settings.ERROR_FORM_ANY_PASS;
+		error=true;
+	else
+		#No keep password for security
+	end
+	#If error occurred, print page
+	if (error) then
+		erb :"/sessions/new", :locals => {
+			:form_errors => settings.form_errors,
+			:form_values => settings.form_values
+		};
+	#Else if any error, check the validity of the account
+	else
+		u=User.find_by_login(params["login"]);
+		#If it's good, validate the inscription
+		if ((u) && (u.password == User.new.encode.hexdigest(params["password"]))) then
+			session[env["rack.session.id"]]=params["login"];
+			redirect "/protected";
+		#Else, the login no exists
+		else
+			settings.form_errors["login"]=settings.ERROR_FORM_NO_LOGIN;
+			erb :"/register", :locals => {
+				:form_errors => settings.form_errors,
+				:form_values => settings.form_values
+			};
+		end
 	end
 end
 
