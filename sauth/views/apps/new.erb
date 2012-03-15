@@ -5,24 +5,35 @@
 		<%= settings.stylesheet %>
 	</head>
 	<body>
-		<h1>Ajouter une application</h1>
-		Service d'authentification
-		<div id="zone">
-			<form action="/apps" method="post">
-				<table border="0">
-					<tr>
-						<td><label for="session_login">Nom : </label></td>
-						<td><input type="text" id="session_login" name="login" size="30" /></td>
-					</tr>
-					<tr>
-						<td><label for="session_password">Url : </label></td>
-						<td><input type="text" id="session_password" name="password" size="30" /></td>
-					</tr>
-					<tr><td></td><td><input name="commit" type="submit" value="Valider" /></td></tr>
-				</table>
-			</form>
-			<a href="/session/new">Retour</a>
-		</div>
+		<center>
+			<h1>Ajouter une application</h1>
+			Service d'authentification
+			<div class="wrapper">
+				<form action="/apps" method="post">
+					<input type="hidden" name="origin" value="http://app_cliente/protected" />
+					<table border="0">
+						<tr>
+							<td><label for="name">Nom : </label></td>
+							<td>
+								<input<% if (form_errors["name"]) then %> class="error"<% end %> type="text" id="name" name="name" size="30" value="<%= form_values["name"]; %>" />
+								<% if (form_errors["name"]) then %><span class="msg_error"><%= form_errors["name"]; %></span><% end %>
+							</td>
+						</tr>
+						<tr>
+							<td><label for="url">Url : </label></td>
+							<td>
+								<input<% if (form_errors["url"]) then %> class="error"<% end %> type="text" id="url" name="url" size="30" value="<%= form_values["url"]; %>" />
+								<% if (form_errors["url"]) then %><span class="msg_error"><%= form_errors["url"]; %></span><% end %>
+							</td>
+						</tr>
+						<tr><td></td><td><input type="submit" name="commit" value="Valider" /></td></tr>
+					</table>
+				</form>
+				
+				
+				<a href="/users/<%= session["s_id"]; %>">Retour</a>
+			</div>
+		</center>
 	</body>
 </html>
 

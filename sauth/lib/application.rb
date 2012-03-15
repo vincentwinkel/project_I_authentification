@@ -13,4 +13,6 @@ class Application < ActiveRecord::Base
 	validates :name, :uniqueness => true;
 	validates :url, :uniqueness => true;
 	validates :url, :format => { :with => /^http:\/\/[^\s]+$/i, :on => :create };
+	validates :admin, :presence => true;
+	validates :admin, :numericality => { :only_integer => true };
 end

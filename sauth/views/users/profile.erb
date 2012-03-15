@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Zone prot&eacute;g&eacute;e</title>
+		<%= settings.stylesheet; %>
+	</head>
+	<body>
+		<center>
+			<h1>Zone prot&eacute;g&eacute;e</h1>
+			Service d'authentification
+			<div class="wrapper">
+				Bienvenue dans votre zone prot&eacute;g&eacute;e, <%= session["s_user"]; %>.<br />
+				<br />
+<% if (settings.s_apps.size > 0) then %>
+				<strong>Liste des applications utilisant votre compte :</strong><br />
+<% settings.s_apps.each { |a| %>
+				<div class="item">
+					<a class="app_used" href="<%= a[1][1]; %>" target="_blank"><%= a[1][0]; %> <span class="grey">(<%= a[1][1]; %>)</span></a>
+					<a class="item_del" href="/<%= a[0]; %>" title="Supprimer l'application" onclick="if (!confirm('Voulez-vous vraiment supprimer l\'application ?')) return false;">x</a>
+				</div>
+<% }; else %>
+				<strong>Vous n'utilisez actuellement aucune application.</strong><br />
+<% end %>
+				<br />
+				<a href="sessions/destroy">Se d&eacute;connecter</a>
+			</div>
+			<div class="wrapper">
+				Webmasters, vous pouvez <a href="/apps/new">ajouter votre application</a> &agrave; ce service.<br />
+<% if (settings.s_apps_admin.size > 0) then %>
+				<br />
+				<strong>Liste de vos applications :</strong><br />
+<% settings.s_apps_admin.each { |a| %>
+				<div class="item">
+					<a class="app_admin" href="<%= a[1][1]; %>" target="_blank"><%= a[1][0]; %> <span class="grey">(<%= a[1][1]; %>)</span> - appID: <%= a[0]; %></a>
+					<a class="item_del" href="/apps/destroy/<%= a[0]; %>" title="Supprimer l'application" onclick="if (!confirm('Voulez-vous vraiment supprimer l\'application ?')) return false;">x</a>
+				</div>
+<% }; end %>
+			</div>
+		</center>
+	</body>
+</html>
+

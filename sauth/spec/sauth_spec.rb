@@ -29,24 +29,24 @@ describe "Without session" do
 	describe "Inscription page" do
 	#############################
 		it "should print the inscription page" do
-			get "/register";
+			get "/users/new";
 			last_response.status.should == 200;
 		end
 		it "should print again this page if an error occurred (any login)" do
 			params={"login" => "","password" => "toto","password_confirmation" => "toto"};
-			post "/register", params;
+			post "/users", params;
 			last_response.status.should == 200;
 			settings.form_errors.should == {"login" => settings.ERROR_FORM_ANY_LOGIN};
 		end
 		it "should print again this page if an error occurred (any password)" do
 			params={"login" => "titi","password" => "","password_confirmation" => "toto"};
-			post "/register", params;
+			post "/users", params;
 			last_response.status.should == 200;
 			settings.form_errors.should == {"password" => settings.ERROR_FORM_ANY_PASS};
 		end
 		it "should print again this page if an error occurred (any password_confirmation)" do
 			params={"login" => "titi","password" => "toto","password_confirmation" => ""};
-			post "/register", params;
+			post "/users", params;
 			last_response.status.should == 200;
 			settings.form_errors.should == {
 				"password" => "",
@@ -55,7 +55,7 @@ describe "Without session" do
 		end
 		it "should print again this page if an error occurred (any params)" do
 			params={"login" => "","password" => "","password_confirmation" => ""};
-			post "/register", params;
+			post "/users", params;
 			last_response.status.should == 200;
 			settings.form_errors.should == {
 				"login" => settings.ERROR_FORM_ANY_LOGIN,
@@ -65,7 +65,7 @@ describe "Without session" do
 		it "should print again this page if an error occurred (all params but" \
 			"password != password_confirm)" do
 			params={"login" => "titi","password" => "toto","password_confirmation" => "tata"};
-			post "/register", params;
+			post "/users", params;
 			last_response.status.should == 200;
 			settings.form_errors.should == {
 				"password" => "",
@@ -76,21 +76,20 @@ describe "Without session" do
 			u=User.new;
 			u.login="login_test";
 			u.password="mdp";
-			u.save;
-			tmp_id=u.id;
+			u.save!;
 			params={"login" => "login_test","password" => "mdp","password_confirmation" => "mdp"};
-			post "/register", params;
+			post "/users", params;
 			last_response.status.should == 200;
 			settings.form_errors.should == {"login" => settings.ERROR_FORM_BAD_LOGIN};
-			User.delete(tmp_id);
 		end
 		it "should redirect to the protected area (any error)" do
 			params={"login" => "login_test","password" => "mdp","password_confirmation" => "mdp"};
-			post "/register", params;
+			post "/users", params;
 			last_response.status.should == 302;
 			follow_redirect!;
-			last_request.path.should == "/protected";
-			last_request.session["suser"].should == "login_test";
+			last_request.path.should match %r{/users/\d+};
+			last_request.session["s_user"].should == "login_test";
+			last_request.session["s_id"].should > 0;
 		end
 	end
 	#############################
@@ -102,19 +101,19 @@ describe "Without session" do
 		end
 		it "should print again this page if an error occurred (any login)" do
 			params={"login" => "","password" => "toto"};
-			post "/sessions/new", params;
+			post "/sessions", params;
 			last_response.status.should == 200;
 			settings.form_errors.should == {"login" => settings.ERROR_FORM_ANY_LOGIN};
 		end
 		it "should print again this page if an error occurred (any password)" do
 			params={"login" => "titi","password" => ""};
-			post "/sessions/new", params;
+			post "/sessions", params;
 			last_response.status.should == 200;
 			settings.form_errors.should == {"password" => settings.ERROR_FORM_ANY_PASS};
 		end
 		it "should print again this page if an error occurred (any params)" do
 			params={"login" => "","password" => ""};
-			post "/sessions/new", params;
+			post "/sessions", params;
 			last_response.status.should == 200;
 			settings.form_errors.should == {
 				"login" => settings.ERROR_FORM_ANY_LOGIN,
@@ -123,7 +122,7 @@ describe "Without session" do
 		end
 		it "should print again this page if an error occurred (account no exists)" do
 			params={"login" => "User_no_exists","password" => "mdp"};
-			post "/sessions/new", params;
+			post "/sessions", params;
 			last_response.status.should == 200;
 			settings.form_errors.should == {"login" => settings.ERROR_FORM_NO_LOGIN};
 		end
@@ -131,15 +130,14 @@ describe "Without session" do
 			u=User.new;
 			u.login="login_test";
 			u.password="mdp";
-			u.save;
-			tmp_id=u.id;
+			u.save!;
 			params={"login" => "login_test","password" => "mdp"};
-			post "/sessions/new", params;
+			post "/sessions", params;
 			last_response.status.should == 302;
 			follow_redirect!;
-			last_request.path.should == "/protected";
-			last_request.session["suser"].should == "login_test";
-			User.delete(tmp_id);
+			last_request.path.should == ("/users/" + u.id.to_s);
+			last_request.session["s_user"].should == "login_test";
+			last_request.session["s_id"].should > 0;
 		end
 	end
 	#############################
@@ -150,18 +148,32 @@ describe "Without session" do
 			last_response.status.should == 302;
 			follow_redirect!;
 			last_request.path.should == "/sessions/new";
-			last_request.session["suser"].should be_nil;
+			last_request.session["s_user"].should be_nil;
+			last_request.session["s_id"].should be_nil;
 		end
 	end
 	#############################
 	describe "Protected area" do
 	#############################
 		it "should redirect to the connection page" do
-			get "/protected";
+			get "/users/1";
 			last_response.status.should == 302;
 			follow_redirect!;
 			last_request.path.should == "/sessions/new";
-			last_request.session["suser"].should be_nil;
+			last_request.session["s_user"].should be_nil;
+			last_request.session["s_id"].should be_nil;
+		end
+	end
+	#############################
+	describe "Add application page" do
+	#############################
+		it "should redirect to the connection page" do
+			get "/apps/new";
+			last_response.status.should == 302;
+			follow_redirect!;
+			last_request.path.should == "/sessions/new";
+			last_request.session["s_user"].should be_nil;
+			last_request.session["s_id"].should be_nil;
 		end
 	end
 end
@@ -170,15 +182,15 @@ end
 describe "With session" do
 	before(:each) do
 		User.all.each { |u| User.delete(u.id); }
+		Application.all.each { |a| Application.delete(a.id); }
+		AppUser.all.each { |au| AppUser.delete(au.id); }
 		u=User.new;
 		u.login="login_test";
 		u.password="mdp";
-		u.save;
-		tmp_id=u.id;
-		params={"login" => "login_test","password" => "mdp","password_confirmation" => "mdp"};
-		post "/register", params;
-		User.delete(tmp_id);
-		#app.stub(:is_connected) { true };
+		u.save!;
+		@tmp_id=u.id;
+		params={"login" => "login_test","password" => "mdp"};
+		post "/sessions", params;
 	end
 	#############################
 	describe "Default page" do
@@ -188,20 +200,20 @@ describe "With session" do
 			last_response.status.should == 302;
 			follow_redirect!;
 			last_request.path.should == "/sessions/new";
-			print "#####"+last_response.inspect+"\n\n\n\n";
-			print "#####"+last_request.inspect+"\n\n\n\n";
-			last_request.session["suser"].should == "login_test";
+			last_request.session["s_user"].should == "login_test";
+			last_request.session["s_id"].should == @tmp_id;
 		end
 	end
 	#############################
 	describe "Inscription page" do
 	#############################
 		it "should redirect to the protected area" do
-			get "/register";
+			get "/users/new";
 			last_response.status.should == 302;
 			follow_redirect!;
-			last_request.path.should == "/protected";
-			last_request.session["suser"].should == "login_test";
+			last_request.path.should == ("/users/" + @tmp_id.to_s);
+			last_request.session["s_user"].should == "login_test";
+			last_request.session["s_id"].should == @tmp_id;
 		end
 	end
 	#############################
@@ -211,28 +223,124 @@ describe "With session" do
 			get "/sessions/new";
 			last_response.status.should == 302;
 			follow_redirect!;
-			last_request.path.should == "/protected";
-			last_request.session["suser"].should == "login_test";
+			last_request.path.should == ("/users/" + @tmp_id.to_s);
+			last_request.session["s_user"].should == "login_test";
+			last_request.session["s_id"].should == @tmp_id;
 		end
 	end
 	#############################
 	describe "Deconnection page" do
 	#############################
-		it "should redirect to the protected area" do
+		it "should destroy the current session" do
 			get "/sessions/destroy";
 			last_response.status.should == 302;
 			follow_redirect!;
 			last_request.path.should == "/sessions/new";
-			last_request.session["suser"].should be_nil;
+			last_request.session["s_user"].should be_nil;
+			last_request.session["s_id"].should be_nil;
 		end
 	end
 	#############################
 	describe "Protected area" do
 	#############################
 		it "should print the page" do
-			get "/protected";
+			get ("/users/" + @tmp_id.to_s);
 			last_response.status.should == 200;
-			last_request.session["suser"].should == "login_test";
+			last_request.session["s_user"].should == "login_test";
+			last_request.session["s_id"].should == @tmp_id;
+		end
+	end
+	#############################
+	describe "Protected area of another user" do
+	#############################
+		it "should print the page" do
+			get ("/users/1");
+			last_response.status.should == 302;
+			follow_redirect!;
+			last_request.path.should == "/sessions/new";
+			follow_redirect!;
+			last_request.path.should == ("/users/" + @tmp_id.to_s);
+			last_request.session["s_user"].should == "login_test";
+			last_request.session["s_id"].should == @tmp_id;
+		end
+	end
+	#############################
+	describe "Add application page" do
+	#############################
+		it "should print the page" do
+			get "/apps/new";
+			last_response.status.should == 200;
+			last_request.session["s_user"].should == "login_test";
+			last_request.session["s_id"].should == @tmp_id;
+		end
+		it "should print again this page if an error occurred (any name)" do
+			params={"name" => "","url" => "http://url"};
+			post "/apps", params;
+			last_response.status.should == 200;
+			settings.form_errors.should == {"name" => settings.ERROR_FORM_ANY_NAME};
+		end
+		it "should print again this page if an error occurred (any url)" do
+			params={"name" => "app_test","url" => ""};
+			post "/apps", params;
+			last_response.status.should == 200;
+			settings.form_errors.should == {"url" => settings.ERROR_FORM_ANY_URL};
+		end
+		it "should print again this page if an error occurred (any params)" do
+			params={"name" => "","url" => ""};
+			post "/apps", params;
+			last_response.status.should == 200;
+			settings.form_errors.should == {
+				"name" => settings.ERROR_FORM_ANY_NAME,
+				"url" => settings.ERROR_FORM_ANY_URL
+			};
+		end
+		it "should redirect to protected area after a new app was created" do
+			params={"name" => "app_test","url" => "http://url"};
+			post "/apps", params;
+			last_response.status.should == 302;
+			follow_redirect!;
+			last_request.path.should == ("/users/" + @tmp_id.to_s);
+			last_response.body.should match %r{<a class="app_admin" href="http://url" target="_blank">app_test};
+		end
+		#############################
+		describe "Actions from protected area" do
+		#############################
+			before(:each) do
+				a1=Application.new;
+				a1.name="app_test1";
+				a1.url="http://url1";
+				a1.admin=@tmp_id;
+				a1.save!;
+				@tmp_aid1=a1.id;
+				a2=Application.new;
+				a2.name="app_test2";
+				a2.url="http://url2";
+				a2.admin=1;
+				a2.save!;
+				tmp_aid2=a2.id;
+				au1=AppUser.new;
+				au1.id_app=@tmp_aid1;
+				au1.id_user=@tmp_id;
+				au1.save!;
+				au2=AppUser.new;
+				au2.id_app=tmp_aid2;
+				au2.id_user=@tmp_id;
+				au2.save!;
+			end
+			it "should list all apps the user uses and he supervises" do
+				get ("/users/" + @tmp_id.to_s);
+				last_response.body.should match %r{<a class="app_used" href="http://url1" target="_blank">app_test1};
+				last_response.body.should match %r{<a class="app_used" href="http://url2" target="_blank">app_test2};
+				last_response.body.should match %r{<a class="app_admin" href="http://url1" target="_blank">app_test1};
+				last_response.body.should_not match %r{<a class="app_admin" href="http://url2" target="_blank">app_test2};
+			end
+			it "should destroy an app" do
+				get ("/apps/destroy/" + @tmp_aid1.to_s);
+				last_response.status.should == 302;
+				follow_redirect!;
+				last_request.path.should == ("/users/" + @tmp_id.to_s);
+				last_response.body.should_not match %r{<a class="app_admin" href="http://url1" target="_blank">app_test1};
+			end
 		end
 	end
 end

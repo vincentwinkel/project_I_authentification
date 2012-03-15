@@ -3,18 +3,19 @@ require 'app_user'
 
 describe AppUser do
 	before(:each) do
-		@a=Application.new();
-		@a.name="App1";
-		@a.url="http://url";
-		@u=User.new();
-		@u.login="Vincent";
-		@u.password="mdp";
-		@au=AppUser.new();
-	end
-	it "should be valid" do
+		@au=AppUser.new;
 		@au.id_app="10";
 		@au.id_user="20";
-		@au.save;
+	end
+	it "should not be valid valid (link already exists)" do
+		@au.save!;
+		tmp_id=@au.id;
+		@au.id_app="10";
+		@au.id_user="20";
+		@au.should be_valid;
+		Application.delete(tmp_id);
+	end
+	it "should be valid" do
 		@au.should be_valid;
 	end
 end

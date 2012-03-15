@@ -1,5 +1,7 @@
-require 'rspec'
-require 'active_record'
-$:.unshift File.join(File.dirname(__FILE__),'..','lib')
+require 'rspec';
+require 'active_record';
+$:.unshift File.join(File.dirname(__FILE__),'..','lib');
+$:.unshift File.join(File.dirname(__FILE__),'..');
 
-require_relative '../database'
+require_relative '../database';
+require_relative '../sauth';

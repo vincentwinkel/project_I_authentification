@@ -10,9 +10,9 @@ describe User do
 	it "should be invalid (any login + any password)" do
 		@u.valid?.should == false;
 	end
-	it "should store 'Vincent' in login attribute" do
-		@u.login="Vincent";
-		@u.login.should == "Vincent";
+	it "should store 'login_test' in login attribute" do
+		@u.login="login_test";
+		@u.login.should == "login_test";
 	end
 	it "should store sha1('mdp') in password attribute" do
 		@u.password="mdp";
@@ -23,22 +23,22 @@ describe User do
 		@u.valid?.should == false;
 	end
 	it "should be invalid (any password)" do
-		@u.login="Vincent";
+		@u.login="login_test";
 		@u.valid?.should == false;
 	end
 	it "should be invalid (login already exists)" do
-		@u.login="Vincent";
+		@u.login="login_test";
 		@u.password="mdp";
-		@u.save;
+		@u.save!;
 		tmp_id=@u.id;
 		@u=User.new;
-		@u.login="Vincent";
+		@u.login="login_test";
 		@u.password="mdp";
 		@u.valid?.should == false;
 		User.delete(tmp_id);
 	end
 	it "should be valid (login + password)" do
-		@u.login="Vincent";
+		@u.login="login_test";
 		@u.password="mdp";
 		@u.should be_valid;
 	end
