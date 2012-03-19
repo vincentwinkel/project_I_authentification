@@ -200,9 +200,9 @@ end
 #Connection link from an other app
 get %r{^/(\d+)/sessions/new$}i do |id_app|
 	a=Application.find_by_id(id_app);
-	#If any app exists, redirect to the origin website
+	#If any app exists, print error
 	if (a.nil?) then
-		request.inspect;#.headers["Location"];
+		erb :"apps/error";
 	#Else, print the connection page
 	else
 		settings.origin=a.url+params["ref"];
