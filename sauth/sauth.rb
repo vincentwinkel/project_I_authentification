@@ -13,7 +13,8 @@ set :form_values, Hash.new; #Form values (to keep corrects values if error(s) oc
 set :form_errors, Hash.new; #Form errors (ex: input empty)
 set :s_apps, Hash.new; #Session apps (apps the current session uses)
 set :s_apps_admin, Hash.new; #Session apps admin (apps the current session is admin)
-set :origin, ""; #url+orgin for external apps connection
+set :origin, ""; #url+origin for external apps connection
+set :aid, ""; #app ID for external apps connection
 
 set :ERROR_FORM_ANY_LOGIN, "Pseudonyme manquant";
 set :ERROR_FORM_BAD_LOGIN, "Pseudonyme indisponible";
@@ -31,6 +32,11 @@ helpers do
 	#Debug
 	def dump(data)
 		print "##### #{data} #####\n";
+	end
+	
+	#Empty string test
+	def is_empty(data)
+		return ((data.nil?) || (data.empty?));
 	end
 	
 	#Create a user session
@@ -53,8 +59,7 @@ helpers do
 	
 	#Returns true if user session exists, else false
 	def is_connected?
-		((session.keys.include? "s_user") \
-		|| ((!request.cookies["s_user"].nil?) && (!request.cookies["s_user"].empty?)));
+		((session.keys.include? "s_user") || (!is_empty(request.cookies["s_user"])));
 	end
 	
 	#Check a result of a session form (conf = true if password_conf is given)
@@ -62,18 +67,18 @@ helpers do
 		error=false; #true if an error occurred, else false
 		settings.form_values.clear;
 		settings.form_errors.clear;
-		if ((login.nil?) || (login.empty?)) then
+		if (is_empty(login)) then
 			settings.form_errors["login"]=settings.ERROR_FORM_ANY_LOGIN;
 			error=true;
 		else
 			settings.form_values["login"]=login;
 		end
-		if ((password.nil?) || (password.empty?)) then
+		if (is_empty(password)) then
 			settings.form_errors["password"]=settings.ERROR_FORM_ANY_PASS;
 			error=true;
 		else
 			#No keep password for security
-			if ((conf == true) && ((password_conf.nil?) || (password_conf.empty?) \
+			if ((conf == true) && ((is_empty(password_conf)) \
 				|| (password != password_conf))) then
 				settings.form_errors["password"]="";
 				settings.form_errors["password_confirmation"]=settings.ERROR_FORM_BAD_PASS_CONFIRM;
@@ -90,13 +95,13 @@ helpers do
 		error=false; #true if an error occurred, else false
 		settings.form_values.clear;
 		settings.form_errors.clear;
-		if ((name.nil?) || (name.empty?)) then
+		if (is_empty(name)) then
 			settings.form_errors["name"]=settings.ERROR_FORM_ANY_NAME;
 			error=true;
 		else
 			settings.form_values["name"]=name;
 		end
-		if ((url.nil?) || (url.empty?)) then
+		if (is_empty(url)) then
 			settings.form_errors["url"]=settings.ERROR_FORM_ANY_URL;
 			error=true;
 		else
@@ -201,11 +206,12 @@ end
 get %r{^/(\d+)/sessions/new$}i do |id_app|
 	a=Application.find_by_id(id_app);
 	#If any app exists, print error
-	if (a.nil?) then
+	if ((a.nil?) || (is_empty(params["ref"]))) then
 		erb :"apps/error";
 	#Else, print the connection page
 	else
 		settings.origin=a.url+params["ref"];
+		settings.aid=a.id;
 		erb :"sessions/new", :locals => {:form_errors => Hash.new,:form_values => Hash.new};
 	end
 end
@@ -294,11 +300,20 @@ end
 
 #Connection form
 post %r{^/sessions$}i do
+	connectResponse(params,"/users/USER_ID","/sessions/new",true);
+end
+post %r{^/apps/sessions$}i do
+	connectResponse(params,params["origin"] + "?key=sauth4567",
+		"/" + params["aid"] + "/sessions/new?ref=" + params["origin"],false);
+end
+
+def connectResponse(params,ok_url,back_url,local)
 	#Check form errors
 	error=checkSessionForm(params["login"],params["password"],nil,false);
 	#If error occurred, print page
 	if (error) then
-		erb :"/sessions/new", :locals => {
+		#erb :"#{back_url}", :locals => {
+		erb "#{back_url}", :locals => {
 			:form_errors => settings.form_errors,
 			:form_values => settings.form_values
 		};
@@ -306,14 +321,17 @@ post %r{^/sessions$}i do
 	else
 		login=params["login"].downcase;
 		u=User.find_by_login(login);
-		#If it's good, validate the inscription
+		#If it's good, validate the connection
 		if ((u) && (u.password == User.new.encode.hexdigest(params["password"]))) then
 			create_session(login);
-			redirect ("/users/" + session["s_id"].to_s);
+			if (local) then
+				ok_url["USER_ID"]=session["s_id"].to_s;
+			end
+			redirect ok_url;
 		#Else, the login no exists
 		else
 			settings.form_errors["login"]=settings.ERROR_FORM_NO_LOGIN;
-			erb :"/sessions/new", :locals => {
+			erb "#{back_url}", :locals => {
 				:form_errors => settings.form_errors,
 				:form_values => settings.form_values
 			};

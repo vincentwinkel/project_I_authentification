@@ -9,8 +9,13 @@
 			<h1>Connexion</h1>
 			Service d'authentification
 			<div class="wrapper">
-				<form action="/sessions" method="post">
-					<input type="hidden" name="origin" value="<% settings.origin; %>" />
+				<form action="<%= (is_empty(settings.origin))?"/sessions":"/apps/sessions"; %>" method="post">
+<% if (!is_empty(settings.origin)) then %>
+					<span class="grey">Vous voulez acc&eacute;der &agrave; l'addresse <%= settings.origin; %></span><br />
+					<br />
+					<input type="hidden" name="origin" value="<%= settings.origin; %>" />
+					<input type="hidden" name="aid" value="<%= settings.aid; %>" />
+<% end %>
 					<table border="0">
 						<tr>
 							<td><label for="login">Pseudonyme : </label></td>

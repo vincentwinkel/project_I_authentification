@@ -14,6 +14,7 @@ end
 describe "Without session" do
 	before(:each) do
 		User.all.each { |u| User.delete(u.id); }
+		Application.all.each { |u| Application.delete(u.id); }
 	end
 	#############################
 	describe "Default page" do
@@ -95,49 +96,99 @@ describe "Without session" do
 	#############################
 	describe "Connection page" do
 	#############################
-		it "should print the connection page" do
-			get "/sessions/new";
-			last_response.status.should == 200;
+		describe "from the sauth" do
+			it "should print the connection page" do
+				get "/sessions/new";
+				last_response.status.should == 200;
+			end
+			it "should print again this page if an error occurred (any login)" do
+				params={"login" => "","password" => "toto"};
+				post "/sessions", params;
+				last_response.status.should == 200;
+				settings.form_errors.should == {"login" => settings.ERROR_FORM_ANY_LOGIN};
+			end
+			it "should print again this page if an error occurred (any password)" do
+				params={"login" => "titi","password" => ""};
+				post "/sessions", params;
+				last_response.status.should == 200;
+				settings.form_errors.should == {"password" => settings.ERROR_FORM_ANY_PASS};
+			end
+			it "should print again this page if an error occurred (any params)" do
+				params={"login" => "","password" => ""};
+				post "/sessions", params;
+				last_response.status.should == 200;
+				settings.form_errors.should == {
+					"login" => settings.ERROR_FORM_ANY_LOGIN,
+					"password" => settings.ERROR_FORM_ANY_PASS
+				};
+			end
+			it "should print again this page if an error occurred (account no exists)" do
+				params={"login" => "User_no_exists","password" => "mdp"};
+				post "/sessions", params;
+				last_response.status.should == 200;
+				settings.form_errors.should == {"login" => settings.ERROR_FORM_NO_LOGIN};
+			end
+			it "should redirect to the protected area (any error)" do
+				u=User.new;
+				u.login="login_test";
+				u.password="mdp";
+				u.save!;
+				params={"login" => "login_test","password" => "mdp"};
+				post "/sessions", params;
+				last_response.status.should == 302;
+				follow_redirect!;
+				last_request.path.should == ("/users/" + u.id.to_s);
+				last_request.session["s_user"].should == "login_test";
+				last_request.session["s_id"].should > 0;
+			end
 		end
-		it "should print again this page if an error occurred (any login)" do
-			params={"login" => "","password" => "toto"};
-			post "/sessions", params;
-			last_response.status.should == 200;
-			settings.form_errors.should == {"login" => settings.ERROR_FORM_ANY_LOGIN};
+		describe "from an existing external app" do
+			before(:each) do
+				@u=User.new;
+				@u.login="login_test";
+				@u.password="mdp";
+				@u.save!;
+				@tmp_id=@u.id;
+				@a=Application.new;
+				@a.name="app_test";
+				@a.url="http://url";
+				@a.admin=1;
+				@a.save!;
+				@tmp_aid=@a.id;
+			end
+			it "should print the page" do
+				get ("/" + @tmp_aid.to_s + "/sessions/new?ref=/test");
+				last_response.status.should == 200;
+			end
+			it "should print again the page if bad params" do
+				params={
+					"login" => "",
+					"password" => "",
+					"origin" => "http://url/test",
+					"aid" => @tmp_aid
+				};
+				post "/apps/sessions", params;
+				last_response.status.should == 200;
+			end
+			it "should redirect to the origin link with good params" do
+				params={
+					"login" => "login_test",
+					"password" => "mdp",
+					"origin" => "http://url/test",
+					"aid" => @tmp_aid
+				};
+				post "/apps/sessions", params;
+				last_response.status.should == 302;
+				follow_redirect!;
+				last_request.url.should == "http://url/test?key=sauth4567";
+			end
 		end
-		it "should print again this page if an error occurred (any password)" do
-			params={"login" => "titi","password" => ""};
-			post "/sessions", params;
-			last_response.status.should == 200;
-			settings.form_errors.should == {"password" => settings.ERROR_FORM_ANY_PASS};
-		end
-		it "should print again this page if an error occurred (any params)" do
-			params={"login" => "","password" => ""};
-			post "/sessions", params;
-			last_response.status.should == 200;
-			settings.form_errors.should == {
-				"login" => settings.ERROR_FORM_ANY_LOGIN,
-				"password" => settings.ERROR_FORM_ANY_PASS
-			};
-		end
-		it "should print again this page if an error occurred (account no exists)" do
-			params={"login" => "User_no_exists","password" => "mdp"};
-			post "/sessions", params;
-			last_response.status.should == 200;
-			settings.form_errors.should == {"login" => settings.ERROR_FORM_NO_LOGIN};
-		end
-		it "should redirect to the protected area (any error)" do
-			u=User.new;
-			u.login="login_test";
-			u.password="mdp";
-			u.save!;
-			params={"login" => "login_test","password" => "mdp"};
-			post "/sessions", params;
-			last_response.status.should == 302;
-			follow_redirect!;
-			last_request.path.should == ("/users/" + u.id.to_s);
-			last_request.session["s_user"].should == "login_test";
-			last_request.session["s_id"].should > 0;
+		describe "from an unknown external app" do
+			it "should redirect to the error apps page" do
+				get "0/sessions/new?ref=/test";
+				last_response.status.should == 200;
+				last_response.body.should match %r{<title>Application inconnue</title>};
+			end
 		end
 	end
 	#############################
@@ -219,13 +270,28 @@ describe "With session" do
 	#############################
 	describe "Connection page" do
 	#############################
-		it "should redirect to the protected area" do
-			get "/sessions/new";
-			last_response.status.should == 302;
-			follow_redirect!;
-			last_request.path.should == ("/users/" + @tmp_id.to_s);
-			last_request.session["s_user"].should == "login_test";
-			last_request.session["s_id"].should == @tmp_id;
+		describe "from the sauth" do
+			it "should redirect to the protected area" do
+				get "/sessions/new";
+				last_response.status.should == 302;
+				follow_redirect!;
+				last_request.path.should == ("/users/" + @tmp_id.to_s);
+				last_request.session["s_user"].should == "login_test";
+				last_request.session["s_id"].should == @tmp_id;
+			end
+		end
+		describe "from an existing external app" do
+			it "should directly redirect to the origin link with good params" do
+				a=Application.new;
+				a.name="app_test";
+				a.url="http://url";
+				a.admin=1;
+				a.save!;
+				get ("/"+ a.id.to_s + "/sessions?ref=/test");
+				last_response.status.should == 302;
+				follow_redirect!;
+				last_request.url.should == "http://url/test?key=sauth4567";
+			end
 		end
 	end
 	#############################
@@ -300,7 +366,8 @@ describe "With session" do
 			last_response.status.should == 302;
 			follow_redirect!;
 			last_request.path.should == ("/users/" + @tmp_id.to_s);
-			last_response.body.should match %r{<a class="app_admin" href="http://url" target="_blank">app_test};
+			last_response.body.should match \
+				%r{<a class="app_admin" href="http://url" target="_blank">app_test};
 		end
 		#############################
 		describe "Actions from protected area" do
@@ -329,17 +396,22 @@ describe "With session" do
 			end
 			it "should list all apps the user uses and he supervises" do
 				get ("/users/" + @tmp_id.to_s);
-				last_response.body.should match %r{<a class="app_used" href="http://url1" target="_blank">app_test1};
-				last_response.body.should match %r{<a class="app_used" href="http://url2" target="_blank">app_test2};
-				last_response.body.should match %r{<a class="app_admin" href="http://url1" target="_blank">app_test1};
-				last_response.body.should_not match %r{<a class="app_admin" href="http://url2" target="_blank">app_test2};
+				last_response.body.should match \
+					%r{<a class="app_used" href="http://url1" target="_blank">app_test1};
+				last_response.body.should match \
+					%r{<a class="app_used" href="http://url2" target="_blank">app_test2};
+				last_response.body.should match \
+					%r{<a class="app_admin" href="http://url1" target="_blank">app_test1};
+				last_response.body.should_not match \
+					%r{<a class="app_admin" href="http://url2" target="_blank">app_test2};
 			end
 			it "should destroy an app" do
 				get ("/apps/destroy/" + @tmp_aid1.to_s);
 				last_response.status.should == 302;
 				follow_redirect!;
 				last_request.path.should == ("/users/" + @tmp_id.to_s);
-				last_response.body.should_not match %r{<a class="app_admin" href="http://url1" target="_blank">app_test1};
+				last_response.body.should_not match \
+					%r{<a class="app_admin" href="http://url1" target="_blank">app_test1};
 			end
 		end
 	end
