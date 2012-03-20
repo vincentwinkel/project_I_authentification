@@ -74,9 +74,7 @@ describe "Without session" do
 			};
 		end
 		it "should print again this page if an error occurred (account already exists)" do
-			u=User.new;
-			u.login="login_test";
-			u.password="mdp";
+			u=User.new({:login => "login_test",:password => "mdp"});
 			u.save!;
 			params={"login" => "login_test","password" => "mdp","password_confirmation" => "mdp"};
 			post "/users", params;
@@ -129,9 +127,7 @@ describe "Without session" do
 				settings.form_errors.should == {"login" => settings.ERROR_FORM_NO_LOGIN};
 			end
 			it "should redirect to the protected area (any error)" do
-				u=User.new;
-				u.login="login_test";
-				u.password="mdp";
+				u=User.new({:login => "login_test",:password => "mdp"});
 				u.save!;
 				params={"login" => "login_test","password" => "mdp"};
 				post "/sessions", params;
@@ -144,15 +140,10 @@ describe "Without session" do
 		end
 		describe "from an existing external app" do
 			before(:each) do
-				@u=User.new;
-				@u.login="login_test";
-				@u.password="mdp";
+				@u=User.new({:login => "login_test",:password => "mdp"});
 				@u.save!;
 				@tmp_id=@u.id;
-				@a=Application.new;
-				@a.name="app_test";
-				@a.url="http://url";
-				@a.admin=1;
+				@a=Application.new({:name => "app_test",:url => "http://url",:admin => "1"});
 				@a.save!;
 				@tmp_aid=@a.id;
 			end
@@ -160,7 +151,12 @@ describe "Without session" do
 				get ("/" + @tmp_aid.to_s + "/sessions/new?ref=/test");
 				last_response.status.should == 200;
 			end
-			it "should print again the page if bad params" do
+			it "should print the error apps page" do
+				get ("/" + @tmp_aid.to_s + "/sessions/new");
+				last_response.status.should == 200;
+				last_response.body.should match %r{<title>Application inconnue</title>};
+			end
+			it "should print again the page (bad params)" do
 				params={
 					"login" => "",
 					"password" => "",
@@ -169,8 +165,10 @@ describe "Without session" do
 				};
 				post "/apps/sessions", params;
 				last_response.status.should == 200;
+				settings.origin.should == "http://url/test";
 			end
-			it "should redirect to the origin link with good params" do
+			it "should redirect to the origin link (good params)" do
+				AppUser.should_receive(:create); #Ensure a create() method call
 				params={
 					"login" => "login_test",
 					"password" => "mdp",
@@ -184,7 +182,7 @@ describe "Without session" do
 			end
 		end
 		describe "from an unknown external app" do
-			it "should redirect to the error apps page" do
+			it "should print the error apps page" do
 				get "0/sessions/new?ref=/test";
 				last_response.status.should == 200;
 				last_response.body.should match %r{<title>Application inconnue</title>};
@@ -235,9 +233,7 @@ describe "With session" do
 		User.all.each { |u| User.delete(u.id); }
 		Application.all.each { |a| Application.delete(a.id); }
 		AppUser.all.each { |au| AppUser.delete(au.id); }
-		u=User.new;
-		u.login="login_test";
-		u.password="mdp";
+		u=User.new({:login => "login_test",:password => "mdp"});
 		u.save!;
 		@tmp_id=u.id;
 		params={"login" => "login_test","password" => "mdp"};
@@ -282,12 +278,10 @@ describe "With session" do
 		end
 		describe "from an existing external app" do
 			it "should directly redirect to the origin link with good params" do
-				a=Application.new;
-				a.name="app_test";
-				a.url="http://url";
-				a.admin=1;
+				#AppUser.should_receive(:find_by_id_user);
+				a=Application.new({:name => "app_test",:url => "http://url",:admin => "1"});
 				a.save!;
-				get ("/"+ a.id.to_s + "/sessions?ref=/test");
+				get ("/" + a.id.to_s + "/sessions/new?ref=/test");
 				last_response.status.should == 302;
 				follow_redirect!;
 				last_request.url.should == "http://url/test?key=sauth4567";
@@ -373,25 +367,15 @@ describe "With session" do
 		describe "Actions from protected area" do
 		#############################
 			before(:each) do
-				a1=Application.new;
-				a1.name="app_test1";
-				a1.url="http://url1";
-				a1.admin=@tmp_id;
+				a1=Application.new({:name => "app_test1",:url => "http://url1",:admin => @tmp_id});
 				a1.save!;
 				@tmp_aid1=a1.id;
-				a2=Application.new;
-				a2.name="app_test2";
-				a2.url="http://url2";
-				a2.admin=1;
+				a2=Application.new({:name => "app_test2",:url => "http://url2",:admin => "1"});
 				a2.save!;
 				tmp_aid2=a2.id;
-				au1=AppUser.new;
-				au1.id_app=@tmp_aid1;
-				au1.id_user=@tmp_id;
+				au1=AppUser.new({:id_app => @tmp_aid1,:id_user => @tmp_id});
 				au1.save!;
-				au2=AppUser.new;
-				au2.id_app=tmp_aid2;
-				au2.id_user=@tmp_id;
+				au2=AppUser.new({:id_app => tmp_aid2,:id_user => @tmp_id});
 				au2.save!;
 			end
 			it "should list all apps the user uses and he supervises" do

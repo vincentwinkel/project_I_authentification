@@ -31,7 +31,7 @@ set :stylesheet, "<link rel=\"stylesheet\" type=\"text/css\" href=" \
 helpers do
 	#Debug
 	def dump(data)
-		print "##### #{data} #####\n";
+		print "\n##### #{data} #####\n";
 	end
 	
 	#Empty string test
@@ -138,9 +138,7 @@ get %r{^/apps/destroy/(\d+)$}i do |id|
 	#If session exists, delete the app
 	if ((is_connected?) && (Integer(id) > 0)) then
 		Application.delete(id);
-		AppUser.find_all_by_id_app(id).each { |a|
-			AppUser.delete(a.id);
-		}
+		AppUser.delete_for_app(id);
 	end
 	#Redirect to protected area
 	redirect ("/users/" + session["s_id"].to_s);
@@ -162,21 +160,25 @@ get %r{^/users/(\d+)$}i do |id|
 	#If session exists, print protected area
 	if ((is_connected?) && (id == session["s_id"].to_s)) then
 		#Check session apps
-		settings.s_apps.clear;
-		settings.s_apps_admin.clear;
-		au=AppUser.find_all_by_id_user(id).each { |a|
-			app=Application.find_by_id(a.id_app);
-			settings.s_apps[app.id]=[app.name,app.url];
-		}
-		a=Application.find_all_by_admin(id).each { |a|
-			settings.s_apps_admin[a.id]=[a.name,a.url];
-		}
+		settings.s_apps.replace(AppUser.get_apps_for_user(id));
+		settings.s_apps_admin.replace(Application.get_apps_for_admin(id));
 		#Print protected area
 		erb :"/users/profile";
 	#Else, redirect to connection page
 	else
 		redirect "/sessions/new";
 	end
+end
+
+#User destroy link
+get %r{^/users/destroy/(\d+)$}i do |id|
+	#If session exists, delete the app
+	if ((is_connected?) && (Integer(id) > 0)) then
+		Application.delete(id);
+		AppUser.delete_for_app(id);
+	end
+	#Redirect to connection page
+	redirect ("/sessions/new");
 end
 
 #User connection link
@@ -208,11 +210,16 @@ get %r{^/(\d+)/sessions/new$}i do |id_app|
 	#If any app exists, print error
 	if ((a.nil?) || (is_empty(params["ref"]))) then
 		erb :"apps/error";
-	#Else, print the connection page
+	#Else, continue procedure
 	else
-		settings.origin=a.url+params["ref"];
-		settings.aid=a.id;
-		erb :"sessions/new", :locals => {:form_errors => Hash.new,:form_values => Hash.new};
+		if (is_connected?) then
+			redirect a.url+params["ref"] + "?key=sauth4567";
+		#Else, print the connection page
+		else
+			settings.origin=a.url+params["ref"];
+			settings.aid=a.id;
+			erb :"sessions/new", :locals => {:form_errors => Hash.new,:form_values => Hash.new};
+		end
 	end
 end
 
@@ -226,8 +233,6 @@ end
 ###########################
 # POST requests
 ###########################
-
-##### From the auth site
 
 #Inscription app form
 post %r{^/apps$}i do
@@ -247,10 +252,7 @@ post %r{^/apps$}i do
 	#Else if any error, check the validity of the account
 	else
 		name=params["name"].downcase;
-		a=Application.new;
-		a.name=name;
-		a.url=params["url"];
-		a.admin=session["s_id"];
+		a=Application.new({:name => name,:url => params["url"],:admin => session["s_id"]});
 		#If it's good, validate the inscription
 		if (a.valid?) then
 			a.save;
@@ -279,9 +281,7 @@ post %r{^/users$}i do
 	#Else if any error, check the validity of the account
 	else
 		login=params["login"].downcase;
-		u=User.new;
-		u.login=login;
-		u.password=params["password"];
+		u=User.new({:login => login,:password => params["password"]});
 		#If it's good, validate the inscription
 		if (u.valid?) then
 			u.save;
@@ -300,20 +300,12 @@ end
 
 #Connection form
 post %r{^/sessions$}i do
-	connectResponse(params,"/users/USER_ID","/sessions/new",true);
-end
-post %r{^/apps/sessions$}i do
-	connectResponse(params,params["origin"] + "?key=sauth4567",
-		"/" + params["aid"] + "/sessions/new?ref=" + params["origin"],false);
-end
-
-def connectResponse(params,ok_url,back_url,local)
+	#connectResponse(params,"/users/USER_ID","/sessions/new",true);
 	#Check form errors
 	error=checkSessionForm(params["login"],params["password"],nil,false);
 	#If error occurred, print page
 	if (error) then
-		#erb :"#{back_url}", :locals => {
-		erb "#{back_url}", :locals => {
+		erb "/sessions/new", :locals => {
 			:form_errors => settings.form_errors,
 			:form_values => settings.form_values
 		};
@@ -322,16 +314,48 @@ def connectResponse(params,ok_url,back_url,local)
 		login=params["login"].downcase;
 		u=User.find_by_login(login);
 		#If it's good, validate the connection
-		if ((u) && (u.password == User.new.encode.hexdigest(params["password"]))) then
+		if ((u) && (u.password == User.encrypt(params["password"]))) then
 			create_session(login);
-			if (local) then
-				ok_url["USER_ID"]=session["s_id"].to_s;
-			end
-			redirect ok_url;
+			redirect ("/users/" + session["s_id"].to_s);
 		#Else, the login no exists
 		else
 			settings.form_errors["login"]=settings.ERROR_FORM_NO_LOGIN;
-			erb "#{back_url}", :locals => {
+			erb :"/sessions/new", :locals => {
+				:form_errors => settings.form_errors,
+				:form_values => settings.form_values
+			};
+		end
+	end
+end
+post %r{^/apps/sessions$}i do
+	#connectResponse(params,params["origin"] + "?key=sauth4567",
+		#"/" + params["aid"] + "/sessions/new?ref=" + params["origin"],false);
+		#"/sessions/new",false);
+	#Check form errors
+	error=checkSessionForm(params["login"],params["password"],nil,false);
+	#If error occurred, print page
+	if (error) then
+		settings.origin=params["origin"];
+		settings.aid=params["aid"];
+		erb "/sessions/new", :locals => {
+			:form_errors => settings.form_errors,
+			:form_values => settings.form_values
+		};
+	#Else if any error, check the validity of the account
+	else
+		login=params["login"].downcase;
+		u=User.find_by_login(login);
+		#If it's good, validate the connection
+		if ((u) && (u.password == User.encrypt(params["password"]))) then
+			create_session(login);
+			au=AppUser.create({:id_app => params["aid"],:id_user => u.id});
+			redirect (params["origin"] + "?key=sauth4567");
+		#Else, the login no exists
+		else
+			settings.origin=params["origin"];
+			settings.aid=params["aid"];
+			settings.form_errors["login"]=settings.ERROR_FORM_NO_LOGIN;
+			erb :"/sessions/new", :locals => {
 				:form_errors => settings.form_errors,
 				:form_values => settings.form_values
 			};
@@ -339,4 +363,41 @@ def connectResponse(params,ok_url,back_url,local)
 	end
 end
 
-##### From an external app
+def connectResponse(params,ok_url,back_url,local)
+	#Check form errors
+	error=checkSessionForm(params["login"],params["password"],nil,false);
+	#If error occurred, print page
+	if (error) then
+		settings.origin=params["origin"];
+		settings.aid=params["aid"];
+		#erb :"#{back_url}", :locals => {
+		erb "/sessions/new", :locals => {
+			:form_errors => settings.form_errors,
+			:form_values => settings.form_values
+		};
+	#Else if any error, check the validity of the account
+	else
+		login=params["login"].downcase;
+		u=User.find_by_login(login);
+		#If it's good, validate the connection
+		if ((u) && (u.password == User.encrypt(params["password"]))) then
+			create_session(login);
+			if (local) then
+				ok_url["USER_ID"]=session["s_id"].to_s;
+			else
+				au=AppUser({:id_app => params["aid"],:id_user => u.id});
+			end
+			redirect ok_url;
+		#Else, the login no exists
+		else
+			settings.origin=params["origin"];
+			settings.aid=params["aid"];
+			settings.form_errors["login"]=settings.ERROR_FORM_NO_LOGIN;
+			#erb "#{back_url}", :locals => {
+			erb :"/sessions/new", :locals => {
+				:form_errors => settings.form_errors,
+				:form_values => settings.form_values
+			};
+		end
+	end
+end
