@@ -3,7 +3,7 @@ require 'app_user'
 
 describe AppUser do
 	before(:each) do
-		AppUser.all.each { |au| AppUser.delete(au.id); }
+		AppUser.destroy_all;
 		@au=AppUser.new({:id_app => "10",:id_user => "20"});
 	end
 	it "should not be valid valid (link already exists)" do

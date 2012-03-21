@@ -3,7 +3,7 @@ require 'user'
 
 describe User do
 	before(:each) do
-		User.all.each { |u| User.delete(u.id); }
+		User.destroy_all;
 		@u=User.new;
 		@crypt="00d70c561892a94980befd12a400e26aeb4b8599";
 		User.stub(:encrypt).and_return(@crypt);

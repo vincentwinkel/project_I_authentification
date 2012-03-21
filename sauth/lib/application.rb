@@ -8,6 +8,15 @@ class Application < ActiveRecord::Base
 		write_attribute(:url,(url[0,"http://".length] == "http://")?url:("http://" + url));
 	end
 	
+	#Get the apps created by a user
+	def self.get_apps_for_admin(id)
+		tab=Hash.new;
+		Application.find_all_by_admin(id).each { |a|
+			tab[a.id]=[a.name,a.url];
+		}
+		tab;
+	end
+	
 	#Check if attributes are correctly defined
 	validates :name, :presence => true;
 	validates :name, :uniqueness => true;

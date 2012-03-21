@@ -3,7 +3,7 @@ require 'application'
 
 describe Application do
 	before(:each) do
-		Application.all.each { |u| Application.delete(u.id); }
+		Application.destroy_all;
 		@a=Application.new;
 		@url="http://url";
 	end

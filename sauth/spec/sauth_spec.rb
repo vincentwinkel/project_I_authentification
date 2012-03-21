@@ -13,8 +13,8 @@ end
 
 describe "Without session" do
 	before(:each) do
-		User.all.each { |u| User.delete(u.id); }
-		Application.all.each { |u| Application.delete(u.id); }
+		User.destroy_all;
+		Application.destroy_all;
 	end
 	#############################
 	describe "Default page" do
@@ -168,7 +168,10 @@ describe "Without session" do
 				settings.origin.should == "http://url/test";
 			end
 			it "should redirect to the origin link (good params)" do
-				AppUser.should_receive(:create); #Ensure a create() method call
+				
+				AppUser.should_receive(:create).with({
+					:id_app => @tmp_aid.to_s,:id_user => @tmp_id.to_s
+				}); #Ensure a create() method call
 				params={
 					"login" => "login_test",
 					"password" => "mdp",
@@ -178,7 +181,7 @@ describe "Without session" do
 				post "/apps/sessions", params;
 				last_response.status.should == 302;
 				follow_redirect!;
-				last_request.url.should == "http://url/test?key=sauth4567";
+				last_request.url.should == "http://url/test?login=login_test&key=sauth4567";
 			end
 		end
 		describe "from an unknown external app" do
@@ -230,9 +233,9 @@ end
 
 describe "With session" do
 	before(:each) do
-		User.all.each { |u| User.delete(u.id); }
+		User.destroy_all;
 		Application.all.each { |a| Application.delete(a.id); }
-		AppUser.all.each { |au| AppUser.delete(au.id); }
+		AppUser.destroy_all;
 		u=User.new({:login => "login_test",:password => "mdp"});
 		u.save!;
 		@tmp_id=u.id;
@@ -284,7 +287,7 @@ describe "With session" do
 				get ("/" + a.id.to_s + "/sessions/new?ref=/test");
 				last_response.status.should == 302;
 				follow_redirect!;
-				last_request.url.should == "http://url/test?key=sauth4567";
+				last_request.url.should == "http://url/test?login=login_test&key=sauth4567";
 			end
 		end
 	end

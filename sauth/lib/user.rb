@@ -1,23 +1,21 @@
 require 'digest/sha1';
 
 class User < ActiveRecord::Base
-	#Attributes
-	attr_accessor :encode;
-	
 	#Link with apps table
 	has_many :app_users;
 	has_many :applications, :through => :app_users;
 	
-	#Constructor
-	def initialize
-		super;
-		@encode=Digest::SHA1.new; #SHA1 object instance
+	#Password setting
+	def password=(mdp)
+		if ((!mdp.nil?) && (!mdp.empty?)) then
+			write_attribute(:password,User.encrypt(mdp).inspect[1,40]);
+		end
 	end
 	
 	#Password encryption
-	def password=(mdp)
+	def self.encrypt(mdp)
 		if ((!mdp.nil?) && (!mdp.empty?)) then
-			write_attribute(:password,@encode.hexdigest(mdp).inspect[1,40]);
+			Digest::SHA1.hexdigest(mdp);
 		end
 	end
 	

@@ -1,12 +1,16 @@
-require 'sinatra';
+ENV["RACK_ENV"]="development";
 
+require 'sinatra';
 require 'active_record';
 require_relative 'database';
 require_relative 'lib/user';
 require_relative 'lib/application';
 require_relative 'lib/app_user';
 
-enable :sessions;
+#enable :sessions;
+if (ENV["RACK_ENV"] != "test") then
+	use Rack::Session::Cookie, :key => "s_user", :expire_after => (60*60*24);
+end
 
 #Attributes and constants
 set :form_values, Hash.new; #Form values (to keep corrects values if error(s) occurred)
@@ -36,7 +40,7 @@ helpers do
 	
 	#Empty string test
 	def is_empty(data)
-		return ((data.nil?) || (data.empty?));
+		((data.nil?) || (data.empty?));
 	end
 	
 	#Create a user session
@@ -44,17 +48,17 @@ helpers do
 		session["s_user"]=login;
 		u=User.find_by_login(login);
 		session["s_id"]=u.id;
-		response.set_cookie("sauth",{
-			:value => login,
-			:expires => Time.parse((Time.now+(60*60*24)).to_s),:path => "/"
-		});
+		#response.set_cookie("sauth",{
+		#	:value => login,
+		#	:expires => Time.parse((Time.now+(60*60*24)).to_s),:path => "/"
+		#});
 	end
 	
 	#Destroy a user session
 	def destroy_session
 		session.delete("s_user");
 		session.delete("s_id");
-		response.set_cookie("sauth",{:value => "",:expires => Time.at(0),:path => "/"});
+		#response.set_cookie("sauth",{:value => "",:expires => Time.at(0),:path => "/"});
 	end
 	
 	#Returns true if user session exists, else false
@@ -213,7 +217,7 @@ get %r{^/(\d+)/sessions/new$}i do |id_app|
 	#Else, continue procedure
 	else
 		if (is_connected?) then
-			redirect a.url+params["ref"] + "?key=sauth4567";
+			redirect (a.url + params["ref"] + "?login=" + session["s_user"] + "&key=sauth4567");
 		#Else, print the connection page
 		else
 			settings.origin=a.url+params["ref"];
@@ -300,12 +304,15 @@ end
 
 #Connection form
 post %r{^/sessions$}i do
+	settings.origin=nil;
+	settings.aid=nil;
 	connectResponse(params,"/users/USER_ID",true);
 end
 post %r{^/apps/sessions$}i do
 	settings.origin=params["origin"];
 	settings.aid=params["aid"];
-	connectResponse(params,params["origin"] + "?key=sauth4567",false);
+	connectResponse(params,params["origin"] + "?login=USER_LOGIN&key=sauth4567",
+		false);
 end
 
 def connectResponse(params,ok_url,local)
@@ -327,7 +334,8 @@ def connectResponse(params,ok_url,local)
 			if (local) then
 				ok_url["USER_ID"]=session["s_id"].to_s;
 			else
-				au=AppUser.create({:id_app => params["aid"],:id_user => u.id});
+				ok_url["USER_LOGIN"]=session["s_user"];
+				AppUser.create({:id_app => params["aid"].to_s,:id_user => u.id.to_s});
 			end
 			redirect ok_url;
 		#Else, the login no exists

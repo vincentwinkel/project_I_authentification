@@ -1,12 +1,11 @@
-$: << File.dirname(__FILE__)
-require 'database'
+$: << File.dirname(__FILE__);
+require 'active_record';
 
-ActiveRecord::Migration.verbose = true
-ActiveRecord::Migrator.migrate "db/migrate"
+databases=YAML.load_file("config/database.yml");
 
-# sqlite3 db/devlopment.sqlite3
-#
-# .databases
-# .tables
-# .schema
-# select * from schema_migrations
+databases.each { |db,conf|
+	ENV['RACK_ENV']=db;
+	load "database.rb";
+	ActiveRecord::Migration.verbose=true;
+	ActiveRecord::Migrator.migrate("db/migrate");
+}

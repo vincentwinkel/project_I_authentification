@@ -1,5 +1,10 @@
-auth:
+test:
   adapter: sqlite3
-  database: "db/auth.sqlite3"
+  database: "db/auth_test.sqlite3"
+  pool: 5
+  timeout: 5000
+development:
+  adapter: sqlite3
+  database: "db/auth_dev.sqlite3"
   pool: 5
   timeout: 5000
