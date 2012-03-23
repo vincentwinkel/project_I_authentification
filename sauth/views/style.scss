@@ -3,22 +3,49 @@ body {
 	background: rgb(231,235,242);
 	margin: 0;
 	padding: 0;
-	border-top: 20px solid rgb(59,89,152);
+}
+strong {
+	color: rgb(70,70,70);
 }
 h1 {
 	margin-bottom: 0;
 	padding-bototm: 0;
-}
-h1, .subtitle {
 	color: rgb(59,89,152);
 	text-shadow: 1px 1px 0 rgb(250,250,250);
 }
 a {
 	text-decoration: none;
-	color: rgb(68,130,188);
+	color: rgb(59,89,152);
 }
-a:hover, .item_del:hover {
-	color: rgb(224,150,45);
+a:hover, .logout a:hover {
+	text-decoration: underline;
+}
+#bann {
+	background: rgb(59,89,152);
+	padding: 3px;
+	border-bottom: 1px solid rgb(19,55,131);
+	box-shadow: 0 0 2px rgba(0,0,0,0.3);
+}
+#bann_content {
+	position: relative;
+	width: 550px;
+	color: rgb(253,253,253);
+	text-align: left;
+}
+#logo {
+	font-size: 20px;
+	font-weight: bold;
+}
+.logout {
+	position: absolute;
+	top: 5px;
+	right: 0;
+	font-size: 12px;
+	color: rgb(216,223,234);
+	font-weight: bold;
+}
+.logout a {
+	color: rgb(253,253,253);
 }
 .grey {
 	font-style: italic;
@@ -31,11 +58,21 @@ a:hover, .item_del:hover {
 	border: 1px solid rgb(196,205,224);
 	border-radius: 3px;
 }
-.line {
+.help_line {
+	position: relative;
 	height: 1px;
-	margin-top: 8px;
-	margin-bottom: 8px;
+	margin-top: 25px;
+	margin-bottom: 12px;
 	border-bottom: 2px dashed rgb(196,205,224);
+}
+.help_label {
+	position: absolute;
+	top: -11px;
+	left: 22px;
+	padding: 4px;
+	color: rgb(196,205,224);
+	background: rgb(255,255,255);
+	font-weight: bold;
 }
 .item {
 	display: block;
@@ -46,9 +83,13 @@ a:hover, .item_del:hover {
 }
 .item a {
 	display: block;
+	color: rgb(59,89,152);
+}
+.item a:hover {
+	text-decoration: none;
 }
 .item:hover {
-	background: rgb(245,247,250);
+	background: rgb(216,223,234);
 }
 .item_del {
 	display: block;
@@ -58,11 +99,15 @@ a:hover, .item_del:hover {
 	font-size: 16px;
 	color: rgb(196,205,224);
 }
+.item_del:hover {
+	color: rgb(59,89,152);
+}
 .wrapper {
-	width: 500px;
+	position: relative;
+	width: 520px;
 	margin-top: 20px;
 	margin-bottom: 20px;
-	padding: 10px;
+	padding: 20px;
 	text-align: left;
 	background: rgb(255,255,255);
 	border: 1px solid rgb(196,205,224);

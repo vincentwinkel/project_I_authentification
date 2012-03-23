@@ -1,31 +1,32 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Zone prot&eacute;g&eacute;e</title>
+		<title>SAuth | Zone prot&eacute;g&eacute;e</title>
 		<%= settings.stylesheet; %>
 	</head>
 	<body>
 		<center>
+			<div id="bann">
+				<div id="bann_content">
+					<span id="logo">vincentbook</span>
+					<span class="logout">Bienvenue <%= session[:s_user]; %> <span style="margin: 3px;">|</span> <a href="/sessions/destroy/<%= session[:s_id]; %>">Deconnexion</a></span>
+				</div>
+			</div>
 			<h1>Zone prot&eacute;g&eacute;e</h1>
 			Service d'authentification
 			<div class="wrapper">
-				Bienvenue dans votre zone prot&eacute;g&eacute;e, <%= session["s_user"]; %>.<br />
-				<br />
 <% if (settings.s_apps.size > 0) then %>
 				<strong>Liste des applications utilisant votre compte :</strong><br />
 <% settings.s_apps.each { |a| %>
 				<div class="item">
 					<a class="app_used" href="<%= a[1][1]; %>" target="_blank"><%= a[1][0]; %> <span class="grey">(<%= a[1][1]; %>)</span></a>
-					<!--a class="item_del" href="/apps/destroy/<%= a[0]; %>" title="Supprimer l'application" onclick="if (!confirm('Voulez-vous vraiment supprimer l\'application ?')) return false;">x</a-->
 				</div>
 <% }; else %>
 				<strong>Vous n'utilisez actuellement aucune application.</strong><br />
 <% end %>
-				<br />
-				<a href="sessions/destroy">Se d&eacute;connecter</a>
 			</div>
 			<div class="wrapper">
-				Webmasters, vous pouvez <a href="/apps/new">ajouter votre application</a> &agrave; ce service.<br />
+				Webmaster ? Vous pouvez <a href="/apps/new">ajouter votre application</a> &agrave; ce service.<br />
 <% if (settings.s_apps_admin.size > 0) then %>
 				<br />
 				<strong>Liste de vos applications :</strong><br />
@@ -35,9 +36,9 @@
 					<a class="item_del" href="/apps/destroy/<%= a[0]; %>" title="Supprimer l'application" onclick="if (!confirm('Voulez-vous vraiment supprimer l\'application ?')) return false;">x</a>
 				</div>
 <% } %>
-				<div class="line"></div>
+				<div class="help_line"><div class="help_label">Aide</div></div>
 				Une fois votre application ajout&eacute;e, le lien &agrave; placer pour se connecter est de la forme :
-				<div class="code">http://sauth:4567/<strong>appID</strong>/sessions/new?ref=<strong>/chemin</strong></div>
+				<div class="code">http://sauth:<%= settings.port; %>/<strong>appID</strong>/sessions/new?ref=<strong>/chemin</strong></div>
 				<table class="grey" border="0">
 					<tr><td><strong>appID</strong> </td><td>: identifiant unique g&eacute;n&eacute;r&eacute; pour votre application</td></tr>
 					<tr><td><strong>/chemin</strong> </td><td>: chemin relatif de redirection une fois l'utilisateur connect&eacute;</td></tr>
@@ -47,4 +48,3 @@
 		</center>
 	</body>
 </html>
-

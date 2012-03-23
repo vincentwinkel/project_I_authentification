@@ -1,12 +1,12 @@
 class CreateTableUsers < ActiveRecord::Migration
-	def up
-		create_table :users do |t|
-			t.column :login, :string; #Add user login
-			t.column :password, :string; #Add user password
-		end
-	end
+  def up
+    create_table :users do |t|
+      t.column :login, :string; #Add user login
+      t.column :password, :string; #Add user password
+    end
+  end
 
-	def down
-	destroy_table :users;
-	end
+  def down
+    destroy_table :users;
+  end
 end

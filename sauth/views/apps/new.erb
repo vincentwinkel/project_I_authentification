@@ -1,37 +1,48 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Ajouter une application</title>
+		<title>SAuth | Ajouter une application</title>
 		<%= settings.stylesheet %>
+<% if (form_errors.size == 0) %>
+		<script type="text/javascript" language="javascript">
+			window.onload=function(){document.getElementById("name").focus();};
+		</script>
+<% end %>
 	</head>
 	<body>
 		<center>
+			<div id="bann">
+				<div id="bann_content">
+					<span id="logo">vincentbook</span>
+					<span class="logout">Bienvenue <%= session[:s_user]; %> <span style="margin: 3px;">|</span> <a href="/sessions/destroy/<%= session[:s_id]; %>">Deconnexion</a></span>
+				</div>
+			</div>
 			<h1>Ajouter une application</h1>
 			Service d'authentification
 			<div class="wrapper">
 				<form action="/apps" method="post">
-					<input type="hidden" name="origin" value="http://app_cliente/protected" />
+					<input type="hidden" name="origin" value="<%= settings.origin; %>" />
 					<table border="0">
 						<tr>
 							<td><label for="name">Nom : </label></td>
 							<td>
-								<input<% if (form_errors["name"]) then %> class="error"<% end %> type="text" id="name" name="name" size="30" value="<%= form_values["name"]; %>" />
-								<% if (form_errors["name"]) then %><span class="msg_error"><%= form_errors["name"]; %></span><% end %>
+								<input<% if (!is_empty(form_errors[:name])) then %> class="error"<% end %> type="text" id="name" name="name" size="30" value="<%= form_values[:name]; %>" />
+								<% if (!is_empty(form_errors[:name])) then %><span class="msg_error"><%= form_errors[:name]; %></span><% end %>
 							</td>
 						</tr>
 						<tr>
 							<td><label for="url">Url : </label></td>
 							<td>
-								<input<% if (form_errors["url"]) then %> class="error"<% end %> type="text" id="url" name="url" size="30" value="<%= form_values["url"]; %>" />
-								<% if (form_errors["url"]) then %><span class="msg_error"><%= form_errors["url"]; %></span><% end %>
+								<input<% if (!is_empty(form_errors[:url])) then %> class="error"<% end %> type="text" id="url" name="url" size="30" value="<%= form_values[:url]; %>" />
+								<% if (!is_empty(form_errors[:url])) then %><span class="msg_error"><%= form_errors[:url]; %></span><% end %>
 							</td>
 						</tr>
 						<tr><td></td><td><input type="submit" name="commit" value="Valider" /></td></tr>
 					</table>
 				</form>
-				<a href="/users/<%= session["s_id"]; %>">Retour</a>
+				<br />
+				<a href="/users/<%= session["s_id"]; %>">Retour au profil</a>
 			</div>
 		</center>
 	</body>
 </html>
-
