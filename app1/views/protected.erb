@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>App1 | Zone protégée</title>
+		<%= settings.stylesheet; %>
+	</head>
+	<body>
+		<center>
+			<h1>Zone protégée</h1>
+			Application cliente 1
+			<div class="wrapper">
+				Bienvenue dans votre zone protégée, <%= session["a_user1"]; %>.<br /><br />
+				<a href="/sessions/destroy">Deconnexion</a>
+			</div>
+		</center>
+	</body>
+</html>

@@ -1,16 +1,21 @@
 #!/bin/sh
 
-case $1 in
-  doc)
-    rspec user_spec.rb --format documentation;
-    rspec application_spec.rb --format documentation;
-    rspec app_user_spec.rb --format documentation;
-    rspec sauth_spec.rb --format documentation;
-  ;;
-  *)
-    rspec user_spec.rb;
-    rspec application_spec.rb;
-    rspec app_user_spec.rb;
-    rspec sauth_spec.rb;
-  ;;
-esac
+sep="####################################################";
+doc="";
+function line() {
+	echo "\n${sep}\n${*}\n${sep}\n";
+}
+
+if [ "$1" == "doc" ]; then
+	doc="--format documentation";
+fi
+
+line "Tests de user.rb";
+rspec user_spec.rb $doc;
+line "Tests de application.rb";
+rspec application_spec.rb $doc;
+line "Tests de app_user.rb";
+rspec app_user_spec.rb $doc;
+line "Tests de sauth.rb";
+rspec sauth_spec.rb $doc;
+echo "\nFin des tests\n\n";

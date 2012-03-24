@@ -1,8 +1,6 @@
-require_relative 'spec_helper';
-
 require 'rack/test';
 require_relative '../sauth';
-
+require_relative 'spec_helper';
 include Rack::Test::Methods;
 
 def app

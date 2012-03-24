@@ -33,7 +33,7 @@ set :ERROR_FORM_ANY_URL, "Url manquante (http://votre_application)";
 set :stylesheet, "<link rel=\"stylesheet\" type=\"text/css\" href=" \
   "\"http://sauth:#{settings.port}/style.css\" />"; #Stylesheet
 
-set :logger, Logger.new("log/raw","weekly"); #Logs
+set :logger, Logger.new(File.dirname(__FILE__) + "/logs/raw","weekly"); #Logs
 #Disable logs for tests
 settings.logger.level=(ENV["RACK_ENV"] == "test")?(Logger::DEBUG):(Logger::WARN);
 
