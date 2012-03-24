@@ -18,25 +18,29 @@
 # Philosophie de codage
 # --------------------------------------------
 
-Les classes du modèle se doivent d'être possiblement les plus indépendantes les unes des autres.
-Elles sont donc soumises à des tests unitaires.
-La classe du contrôleur est soumise à des tests d'intégration avec le modèle. Elle se doit
-également d'être la plus indépendante possible des couchers inférieures (Sinatra et ActiveRecord).
-Cela signifie la présence de hooks et justifie certains choix de conception qui peuvent alourdir
-le code du contrôleur.
+Les classes du modèle se doivent d'être possiblement les plus indépendantes les
+unes des autres. Elles sont donc soumises à des tests unitaires.
+La classe du contrôleur est soumise à des tests d'intégration avec le modèle.
+Elle se doit également d'être la plus indépendante possible des couchers
+inférieures (Sinatra et ActiveRecord).
+Cela signifie la présence de hooks et justifie certains choix de conception qui
+peuvent alourdir le code du contrôleur.
 
-Côté Web, l'application est soumise, de manière allégée, aux standards de sécurité (NTUI/FIEO),
-afin de pouvoir facilement l'adapter à des situations réelles d'utilisation.
+Côté Web, l'application est soumise, de manière allégée, aux standards de
+sécurité (NTUI/FIEO), afin de pouvoir facilement l'adapter à des situations
+réelles d'utilisation.
 
 
 # Pré-requis pour les tests
 # --------------------------------------------
 
-Il est nécessaire de modifier le fichier /etc/host de votre machine, en ajoutant ces 2 lignes :
+Il est nécessaire de modifier le fichier /etc/host de votre machine, en ajoutant
+ces 2 lignes :
 127.0.0.1 sauth
 127.0.0.1 appli
 
-La base de données de développement fournie est vide. Celle des tests RSpec est gérée par ceux-ci.
+La base de données de développement fournie est vide. Celle des tests RSpec est
+gérée par ceux-ci.
 
 Les logs sont sauvés dans le fichier ./sauth/logs/raw).
 
@@ -45,7 +49,8 @@ Les logs sont sauvés dans le fichier ./sauth/logs/raw).
 # --------------------------------------------
 
 La première phase de tests consiste à utiliser RSpec.
-Pour lancer tous les tests, placez-vous dans ./sauth/spec et exécutez le script "./all_spec.sh".
+Pour lancer tous les tests, placez-vous dans ./sauth/spec et exécutez le
+script "./all_spec.sh".
 Note: exécutez "./all_spec doc" pour activer le format "documentation" de RSpec.
 
 
@@ -57,101 +62,117 @@ La Base de données étant vide, il faut commencer par la remplir.
 
 ## Lancement du service d'authentification
 - Lancez le serveur ("ruby sauth.rb" depuis ./sauth).
-- Accédez à l'URL http://sauth:4567 depuis votre navigateur. Vous êtes redirigé sur la page de
-  connexion. C'est la page par défaut (incluant: 404).
-- Essayez de vous connecter, vous obtiendrez une quelconque erreur (champs manquant(s), login
-  inexistant, ...). Les valeurs des champs corrects sont préservées.
-- Cliquez alors sur le lien d'inscription. Vous êtes redirigé sur la page d'inscription.
-- Il est possible de tester les cas d'erreur en laissant des champs vides ou en confirmant mal
-  le mot de passe. Les champs concernés par les erreurs deviennent rouges et l'erreur est affichée
-  et les valeurs des champs corrects sont préservées.
+- Accédez à l'URL http://sauth:4567 depuis votre navigateur. Vous êtes redirigé
+  sur la page de connexion. C'est la page par défaut (incluant: 404).
+- Essayez de vous connecter, vous obtiendrez une quelconque erreur (champs
+  manquant(s), login inexistant, ...). Les valeurs des champs corrects sont
+  préservées.
+- Cliquez alors sur le lien d'inscription. Vous êtes redirigé sur la page
+  d'inscription.
+- Il est possible de tester les cas d'erreur en laissant des champs vides ou en
+  confirmant mal le mot de passe. Les champs concernés par les erreurs
+  deviennent rouges et l'erreur est affichée et les valeurs des champs corrects
+  sont préservées.
 - Entrez enfin un login + mot de passe + confirmation, puis validez.
 - Vous êtes redirigé vers votre profil sauth, vide.
 
 ## Connexion à l'application 1
 - Lancer l'application 1 ("ruby appli.rb" depuis ./app1).
-- Accédez à l'URL http://appli:9191 depuis un nouvel onglet de votre navigateur. Vous êtes sur
-  la page d'accueil.
+- Accédez à l'URL http://appli:9191 depuis un nouvel onglet de votre navigateur.
+  Vous êtes sur la page d'accueil.
 - Cliquez sur le lien de connexion.
-- Vous êtes redirigé vers une page d'erreur du sauth précisant que l'application n'existe pas.
-- Depuis votre profil sauth, ajoutez une nouvelle application (vous pouvez une fois de plus tester
-  les cas d'erreur en laissant des champs vides).
-- Choisissez un nom et précisez "appli:9191" pour l'URL (à noter que "http://" est automatiquement
-  ajouté si non-précisé).
-- Vous êtes redirigé vers votre profil sauth, et l'aplication ajoutée est affichée dans la liste de
-  vos applications, avec son URL et son appID 1.
+- Vous êtes redirigé vers une page d'erreur du sauth précisant que l'application
+  n'existe pas.
+- Depuis votre profil sauth, ajoutez une nouvelle application (vous pouvez une
+  fois de plus tester les cas d'erreur en laissant des champs vides).
+- Choisissez un nom et précisez "appli:9191" pour l'URL (à noter que "http://"
+  est automatiquement ajouté si non-précisé).
+- Vous êtes redirigé vers votre profil sauth, et l'aplication ajoutée est
+  affichée dans la liste de vos applications, avec son URL et son appID 1.
 - Retournez sur l'application 1 et cliquez de nouveau sur le lien de connexion.
 - Vous êtes maintenant connecté sur l'application 1.
-- Sur votre profil sauth, l'application 1 est maintenant affichée dans la liste des applications
-  que vous utilisez.
+- Sur votre profil sauth, l'application 1 est maintenant affichée dans la liste
+  des applications que vous utilisez.
 
 ## Connexion à l'application 2
-- Ajoutez une deuxième application depuis le sauth, comme pour la première, mais avec
-  l'URL "appli:9292" (vous pouvez tester les cas d'erreur en laissant des champs vides ou en
-  indiquant un nom ou une URL déjà utilisé pour l'application 1).
-- Vous êtes redirigé vers votre profil sauth, et l'aplication ajoutée est affichée dans la liste
-  de vos applications, avec son URL et son appID 2.
+- Ajoutez une deuxième application depuis le sauth, comme pour la première, mais
+  avec l'URL "appli:9292" (vous pouvez tester les cas d'erreur en laissant des
+  champs vides ou en indiquant un nom ou une URL déjà utilisé pour
+  l'application 1).
+- Vous êtes redirigé vers votre profil sauth, et l'aplication ajoutée est
+  affichée dans la liste de vos applications, avec son URL et son appID 2.
 - Déconnectez-vous du sauth. Vous êtes redirigé sur la page de connexion.
 - Lancez l'application 2 ("ruby appli.rb" depuis ./app2).
-- Accédez à l'URL http://appli:9292 depuis un nouvel onglet de votre navigateur. Vous êtes sur
-  la page d'accueil.
+- Accédez à l'URL http://appli:9292 depuis un nouvel onglet de votre navigateur.
+  Vous êtes sur la page d'accueil.
 - Cliquez sur le lien de connexion.
-- Vous êtes redirigé sur la page de connexion du sauth, affichant l'URL de l'application sur
-  laquelle vous souhaitez vous connecter.
-- Indiquez votre login + mot de passe. Vous êtes redirigé vers votre profil de l'application 2
-  avec votre login du sauth (vous pouvez également tester les cas d'erreur).
-- Cela vous connecte également automatiquement sur le sauth, et vous pouvez voir sur votre profil
-  sauth l'application 2 dans vos applications utilisées.
+- Vous êtes redirigé sur la page de connexion du sauth, affichant l'URL de
+  l'application sur laquelle vous souhaitez vous connecter.
+- Indiquez votre login + mot de passe. Vous êtes redirigé vers votre profil de
+  l'application 2 avec votre login du sauth (vous pouvez également tester les
+  cas d'erreur).
+- Cela vous connecte également automatiquement sur le sauth, et vous pouvez voir
+  sur votre profil sauth l'application 2 dans vos applications utilisées.
   
-Vous pouvez mantenant tester les cas de connexion/déconnexion sur les 3 plateformes.
+Vous pouvez mantenant tester les cas de connexion/déconnexion sur les 3
+plateformes.
 On distingue plusieurs cas :
-- Si vous êtes connecté sur le sauth, les connexion/déconnexions aux applications sont
-  "transparentes" (pas de demande d'identifiants)
-- Si vous n'êtes pas connecté sur le sauth, la connexion à une application vous demande vos
-  identifiants depuis la page de connexion du sauth, et vous connecte sur ce dernier en plus de
-  vous connecter sur l'application demandée.
+- Si vous êtes connecté sur le sauth, les connexion/déconnexions aux
+  applications sont "transparentes" (pas de demande d'identifiants).
+- Si vous n'êtes pas connecté sur le sauth, la connexion à une application vous
+  demande vos identifiants depuis la page de connexion du sauth, et vous
+  connecte sur ce dernier en plus de vous connecter sur l'application demandée.
 
 ## Suppression d'une application
-Il n'est pas possible de supprimer une application utilisée, par soucis techniques (requiert de
-nouveaux échanges entre sauth et application pour gérer et sécuriser les sessions).
+Il n'est pas possible de supprimer une application utilisée, par soucis
+techniques (requiert de nouveaux échanges entre sauth et application pour gérer
+et sécuriser les sessions).
 Cependant, vous pouvez supprimer vos propres applications.
 - Allez sur votre profil sauth.
-- Cliquez sur le lien de l'application 1, afin d'ouvrir votre profil dans un nouvel onglet.
+- Cliquez sur le lien de l'application 1, afin d'ouvrir votre profil dans un
+  nouvel onglet.
 - Connectez-vous sur l'application 1, si ce n'est pas déjà fait.
-- Supprimez l'application 1 depuis votre profil sauth en cliquant sur la croix puis en validant
-  le popup javascript.
-- Cela rafraichit votre profil sauth en ayant supprimé l'application 1 non seulement dans la liste
+- Supprimez l'application 1 depuis votre profil sauth en cliquant sur la croix
+  puis en validant le popup javascript.
+- Cela rafraichit votre profil sauth en ayant supprimé l'application 1 non
+  seulement dans la liste
   de vos applications mais également dans la liste de celles que vous utilisez.
-- Retournez sur l'application 1. Déconnectez-vous et reconnectez-vous via le lien de connexion.
-- Vous êtes redirigé vers une page d'erreur du sauth précisant que l'application n'existe pas.
+- Retournez sur l'application 1. Déconnectez-vous et reconnectez-vous via le
+  lien de connexion.
+- Vous êtes redirigé vers une page d'erreur du sauth précisant que l'application
+  n'existe pas.
 
 ## Changement de session
 - Déconnectez-vous de l'application 2, si ce n'est pas déjà fait.
 - Déconnectez-vous et créez un nouvel utilisateur sur le sauth
 - Connectez-vous sur l'application 2.
-- Vous êtes redirigé sur la page de connexion du sauth, affichant l'URL de l'application sur
+- Vous êtes redirigé sur la page de connexion du sauth, affichant l'URL de
+  l'application sur
   laquelle vous souhaitez vous connecter.
-- Indiquez votre nouveau login + mot de passe. Vous êtes redirigé vers votre profil de
-  l'application 2 avec le login de votre nouveau profil du sauth.
+- Indiquez votre nouveau login + mot de passe. Vous êtes redirigé vers votre
+  profil de l'application 2 avec le login de votre nouveau profil du sauth.
 
 
 # Rejeu des tests
 # --------------------------------------------
-Le choix de conception qui est de traiter un élément (utilisateur ou application) avec son ID et
-non son nom fait qu'il n'est pas possible de rejouer les tests de création/suppression
-d'application plus d'une fois sans modifier le code, du fait que les ID écrits en durs sont
-incrémentés par Sqlite à chaque insertion.
+Le choix de conception qui est de traiter un élément (utilisateur ou
+application) avec son ID et non son nom fait qu'il n'est pas possible de rejouer
+les tests de création/suppression d'application plus d'une fois sans modifier le
+code, du fait que les ID écrits en durs sont incrémentés par Sqlite à chaque
+insertion.
 
 L'application 1 a par défaut le port 9191 et l'appID 1.
 L'application 2 a par défaut le port 9292 et l'appID 2.
 
 Vous pouvez donc :
-- Réintialiser les BDD en exécutant le script "./reset_db.sh" depuis ./sauth (si cela ne échoue,
-  effacer le fichier BDD ./sauth/auth_dev.sqlite3 et effectuer une nouvelle migration en exécuant
-  "ruby migration.rb" depuis ./sauth).
+- Réintialiser les BDD en exécutant le script "./reset_db.sh" depuis ./sauth
+  (si cela ne échoue, effacer le fichier BDD ./sauth/auth_dev.sqlite3 et
+  effectuer une nouvelle migration en exécuant"ruby migration.rb" depuis
+  ./sauth).
   Mais cela supprimera également les utilisateurs enregistrés.
-- Modifier le code des applications en remplaçant les appID (ligne 7 du fichier ./app*/appli.rb)
-  puis en relançant l'application (CTRL+C puis "ruby appli.rb" depuis ./app*)
+- Modifier le code des applications en remplaçant les appID (ligne 7 du
+  fichier ./app*/appli.rb) puis en relançant l'application
+  (CTRL+C puis "ruby appli.rb" depuis ./app*).
 
-Il peut également être intéressant de supprimer manuellement les cookies générés (pour les
-domaines "sauth" et "appli", cf votre navigateur).
+Il peut également être intéressant de supprimer manuellement les cookies générés
+(pour les domaines "sauth" et "appli", cf votre navigateur).
