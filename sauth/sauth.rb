@@ -27,8 +27,9 @@ set :ERROR_FORM_NO_LOGIN, "Pseudonyme inexistant";
 set :ERROR_FORM_ANY_PASS, "Mot de passe manquant";
 set :ERROR_FORM_BAD_PASS_CONFIRM, "Mauvaise confirmation";
 set :ERROR_FORM_ANY_NAME, "Nom manquant";
-set :ERROR_FORM_BAD_NAME, "Nom indisponible";
+set :ERROR_FORM_BAD_NAME, "Nom indisponible et / ou";
 set :ERROR_FORM_ANY_URL, "Url manquante (http://votre_application)";
+set :ERROR_FORM_BAD_URL, "Url indisponible";
 
 set :stylesheet, "<link rel=\"stylesheet\" type=\"text/css\" href=" \
   "\"http://sauth:#{settings.port}/style.css\" />"; #Stylesheet
@@ -157,18 +158,6 @@ get %r{^/apps/new$}i do
   end
 end
 
-#App destroy link
-get %r{^/apps/destroy/(\d+)$}i do |id|
-  id=id.to_i;
-  #If session exists, delete the app
-  if ((is_connected?) && (id > 0)) then
-    Application.delete(id);
-    AppUser.delete_for_app(id);
-  end
-  #Redirect to protected area
-  redirect "/users/#{session[:s_id]}";
-end
-
 #User inscription link
 get %r{^/users/new$}i do
   #If session exists, redirect to protected area
@@ -207,18 +196,6 @@ get %r{^/sessions/new$}i do
   end
 end
 
-#Deconnection link
-get %r{^/sessions/destroy/(\d+)$}i do |id|
-  id=id.to_i;
-  #If session exists, delete it
-  if ((is_connected?) && (id == session[:s_id])) then
-    settings.logger.info("[Disconnection] User \##{session[:s_id]}: #{session[:s_user]}");
-    destroy_session;
-  end
-  #Redirect to connection page
-  redirect "/sessions/new";
-end
-
 ##### From an external app
 
 #Connection link from an other app
@@ -249,6 +226,34 @@ get "/*" do
 end
 
 ###########################
+# DELETE requests
+###########################
+
+#App destroy link
+delete %r{^/apps/(\d+)$}i do |id|
+  id=id.to_i;
+  #If session exists, delete the app
+  if ((is_connected?) && (id > 0)) then
+    Application.delete(id);
+    AppUser.delete_for_app(id);
+  end
+  #Redirect to protected area
+  redirect "/users/#{session[:s_id]}";
+end
+
+#Deconnection link
+delete %r{^/sessions/(\d+)$}i do |id|
+  id=id.to_i;
+  #If session exists, delete it
+  if ((is_connected?) && (id == session[:s_id])) then
+    settings.logger.info("[Disconnection] User \##{session[:s_id]}: #{session[:s_user]}");
+    destroy_session;
+  end
+  #Redirect to connection page
+  redirect "/sessions/new";
+end
+
+###########################
 # POST requests
 ###########################
 
@@ -267,18 +272,19 @@ post %r{^/apps$}i do
       :form_errors => settings.form_errors,
       :form_values => settings.form_values
     };
-  #Else if any error, check the validity of the account
+  #Else if any error, check the validity of the app
   else
     name=params[:name].downcase;
     a=Application.new({:name => name,:url => params[:url],:admin => session[:s_id]});
-    #If it's good, validate the inscription
+    #If it's good, validate the add
     if (ActiveRecordHooks.valid?(a)) then
       ActiveRecordHooks.save(a);
       settings.logger.info("[New app] App \##{a.id}: #{a.name} (#{a.url})");
       redirect "/users/#{session[:s_id]}";
-    #Else, the login already exists
+    #Else, the app name or app url already exists
     else
       settings.form_errors[:name]=settings.ERROR_FORM_BAD_NAME;
+      settings.form_errors[:url]=settings.ERROR_FORM_BAD_URL;
       erb :"apps/new", :locals => {
         :form_errors => settings.form_errors,
         :form_values => settings.form_values

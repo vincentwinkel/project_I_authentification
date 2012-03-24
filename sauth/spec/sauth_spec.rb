@@ -176,7 +176,7 @@ describe "Without session" do
   describe "Deconnection page" do
   #############################
     it "should redirect to the connection page" do
-      get "/sessions/destroy";
+      delete "/sessions/1";
       last_response.status.should == 302;
       follow_redirect!;
       last_request.path.should == "/sessions/new";
@@ -274,7 +274,7 @@ describe "With session" do
   describe "Deconnection page" do
   #############################
     it "should redirect to the connection page after the current session was destroyed" do
-      get "/sessions/destroy/#{@tmp_id}";
+      delete "/sessions/#{@tmp_id}";
       last_response.status.should == 302;
       follow_redirect!;
       last_request.path.should == "/sessions/new";
@@ -286,7 +286,7 @@ describe "With session" do
   describe "Deconnection page of another user" do
   #############################
     it "should redirect to the connection page" do
-      get "/sessions/destroy/1";
+      delete "/sessions/1";
       last_response.status.should == 302;
       follow_redirect!;
       last_request.path.should == "/sessions/new";
@@ -392,7 +392,7 @@ describe "With session" do
       end
       it "should destroy an app and dependencies" do
         AppUser.should_receive(:delete_for_app).with(@tmp_aid1);
-        get "/apps/destroy/#{@tmp_aid1}";
+        delete "/apps/#{@tmp_aid1}";
         last_response.status.should == 302;
         follow_redirect!;
         last_request.path.should == "/users/#{@tmp_id}";

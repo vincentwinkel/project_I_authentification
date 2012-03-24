@@ -40,7 +40,6 @@ end
 
 #Protected area
 get %r{^/protected$}i do
-print "-----------#{is_connected?}------#{params[:login]}-------";
   #If GET params exist, redirect to protected area without them (security)
   if ((!is_empty(params[:login])) && (params[:key] == "sauth4567")) then
       session[:a_user1]=params[:login];

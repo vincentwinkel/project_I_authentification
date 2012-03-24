@@ -14,7 +14,9 @@
 			<div id="bann">
 				<div id="bann_content">
 					<span id="logo">vincentbook</span>
-					<span class="logout">Bienvenue <%= session[:s_user]; %> <span style="margin: 3px;">|</span> <a href="/sessions/destroy/<%= session[:s_id]; %>">Deconnexion</a></span>
+					<span class="logout">Bienvenue <%= session[:s_user]; %> <span style="margin: 3px;">|</span> <a href="/sessions/<%= session[:s_id]; %>" onclick="document.forms['session_del'].submit(); return false;">Deconnexion</a></span>
+					<form style="display: none;" id="session_del" action="/sessions/<%= session[:s_id]; %>" method="post"><input name="_method" type="hidden" value="delete" /><input type="submit" /></form>
+				</div>
 				</div>
 			</div>
 			<h1>Ajouter une application</h1>
