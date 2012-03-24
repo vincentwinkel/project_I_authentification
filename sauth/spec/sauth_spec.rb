@@ -31,17 +31,23 @@ describe "Without session" do
       last_response.status.should == 200;
     end
     it "should print again this page if an error occurred (any login)" do
-      post "/users", {:login => "",:password => :toto,:password_confirmation => "toto"};
+      post "/users", {:user => {:login => "",:password => "mdp"},:password_confirmation => "mdp"};
       last_response.status.should == 200;
       settings.form_errors.should == {:login => settings.ERROR_FORM_ANY_LOGIN};
     end
     it "should print again this page if an error occurred (any password)" do
-      post "/users", {:login => "titi",:password => "",:password_confirmation => "toto"};
+      post "/users", {
+        :user => {:login => "login_test",:password => ""},
+        :password_confirmation => "mdp"
+      };
       last_response.status.should == 200;
       settings.form_errors.should == {:password => settings.ERROR_FORM_ANY_PASS};
     end
     it "should print again this page if an error occurred (any password_confirmation)" do
-      post "/users", {:login => "titi",:password => "toto",:password_confirmation => ""};
+      post "/users", {
+        :user => {:login => "login_test",:password => "mdp"},
+        :password_confirmation => ""
+      };
       last_response.status.should == 200;
       settings.form_errors.should == {
         :password => "",
@@ -49,7 +55,7 @@ describe "Without session" do
       };
     end
     it "should print again this page if an error occurred (any params)" do
-      post "/users", {:login => "",:password => "",:password_confirmation => ""};
+      post "/users", {:user => {:login => "",:password => ""},:password_confirmation => ""};
       last_response.status.should == 200;
       settings.form_errors.should == {
         :login => settings.ERROR_FORM_ANY_LOGIN,
@@ -58,7 +64,10 @@ describe "Without session" do
     end
     it "should print again this page if an error occurred (all params but" \
       "password != password_confirm)" do
-      post "/users", {:login => "titi",:password => "toto",:password_confirmation => "tata"};
+      post "/users", {
+        :user => {:login => "login_test",:password => "mdp1"},
+        :password_confirmation => "mdp2"
+      };
       last_response.status.should == 200;
       settings.form_errors.should == {
         :password => "",
@@ -68,14 +77,19 @@ describe "Without session" do
     it "should print again this page if an error occurred (account already exists)" do
       u=User.create!({:login => "login_test",:password => "mdp"});
       ActiveRecordHooks.should_receive(:valid?).and_return(false);
-      post "/users", {:login => "login_test",:password => "mdp",:password_confirmation => "mdp"};
+      post "/users", {
+        :user => {:login => "login_test",:password => "mdp"},
+        :password_confirmation => "mdp"
+      };
       last_response.status.should == 200;
       settings.form_errors.should == {:login => settings.ERROR_FORM_BAD_LOGIN};
     end
     it "should redirect to the protected area (any error)" do
       ActiveRecordHooks.should_receive(:valid?).and_return(true);
-      #ActiveRecordHooks.should_receive(:save).and_return();
-      post "/users", {:login => "login_test",:password => "mdp",:password_confirmation => "mdp"};
+      post "/users", {
+        :user => {:login => "login_test",:password => "mdp"},
+        :password_confirmation => "mdp"
+      };
       last_response.status.should == 302;
       follow_redirect!;
       last_request.path.should match %r{/users/\d+};
@@ -92,17 +106,17 @@ describe "Without session" do
         last_response.status.should == 200;
       end
       it "should print again this page if an error occurred (any login)" do
-        post "/sessions", {:login => "",:password => "toto"};
+        post "/sessions", {:user => {:login => "",:password => "toto"}};
         last_response.status.should == 200;
         settings.form_errors.should == {:login => settings.ERROR_FORM_ANY_LOGIN};
       end
       it "should print again this page if an error occurred (any password)" do
-        post "/sessions", {:login => "titi",:password => ""};
+        post "/sessions", {:user => {:login => "titi",:password => ""}};
         last_response.status.should == 200;
         settings.form_errors.should == {:password => settings.ERROR_FORM_ANY_PASS};
       end
       it "should print again this page if an error occurred (any params)" do
-        post "/sessions", {:login => "",:password => ""};
+        post "/sessions", {:user => {:login => "",:password => ""}};
         last_response.status.should == 200;
         settings.form_errors.should == {
           :login => settings.ERROR_FORM_ANY_LOGIN,
@@ -111,14 +125,14 @@ describe "Without session" do
       end
       it "should print again this page if an error occurred (account no exists)" do
         User.should_receive(:find_by_login).and_return(nil);
-        post "/sessions", {:login => "User_no_exists",:password => "mdp"};
+        post "/sessions", {:user => {:login => "User_no_exists",:password => "mdp"}};
         last_response.status.should == 200;
         settings.form_errors.should == {:login => settings.ERROR_FORM_NO_LOGIN};
       end
       it "should redirect to the protected area (any error)" do
         User.should_receive(:encrypt).with("mdp").at_least(1).and_return(@crypt);
         u=User.create!({:login => "login_test",:password => "mdp"});
-        post "/sessions", {:login => "login_test",:password => "mdp"};
+        post "/sessions", {:user => {:login => "login_test",:password => "mdp"}};
         last_response.status.should == 302;
         follow_redirect!;
         last_request.path.should == "/users/#{u.id}";
@@ -137,14 +151,9 @@ describe "Without session" do
         get "/#{@tmp_aid}/sessions/new?ref=/test";
         last_response.status.should == 200;
       end
-      it "should print the error apps page (any GET param)" do
-        get "/#{@tmp_aid}/sessions/new";
-        last_response.status.should == 200;
-        last_response.body.should match %r{Application inconnue</title>};
-      end
       it "should print again the page (bad params)" do
-        post "/apps/sessions", {:login => "",
-          :password => "",
+        post "/apps/sessions", {
+          :user => {:login => "",:password => ""},
           :origin => "http://url/test",
           :aid => @tmp_aid
         };
@@ -154,8 +163,7 @@ describe "Without session" do
       it "should redirect to the original link (good params)" do
         AppUser.should_receive(:add_user_for_app).with(@tmp_aid,@tmp_id);
         post "/apps/sessions", {
-          :login => "login_test",
-          :password => "mdp",
+          :user => {:login => "login_test",:password => "mdp"},
           :origin => "http://url/test",
           :aid => @tmp_aid
         };
@@ -205,7 +213,7 @@ describe "Without session" do
       follow_redirect!;
       last_request.path.should == "/sessions/new";
       last_request.session[:s_user].should be_nil;
-      last_request.session[:s_id].should be_nil;
+      last_request.session[:s_id].should == nil;
     end
   end
 end
@@ -220,7 +228,7 @@ describe "With session" do
     @crypt="00d70c561892a94980befd12a400e26aeb4b8599";
     User.should_receive(:encrypt).with("mdp").at_least(1).and_return(@crypt);
     #Already tested
-    post "/sessions", {:login => "login_test",:password => "mdp"};
+    post "/sessions", {:user => {:login => "login_test",:password => "mdp"}};
   end
   #############################
   describe "Default page" do
@@ -328,17 +336,17 @@ describe "With session" do
       last_request.session[:s_id].should == @tmp_id;
     end
     it "should print again this page if an error occurred (any name)" do
-      post "/apps", {:name => "",:url => "http://url"};
+      post "/apps", {:application => {:name => "",:url => "http://url"}};
       last_response.status.should == 200;
       settings.form_errors.should == {:name => settings.ERROR_FORM_ANY_NAME};
     end
     it "should print again this page if an error occurred (any url)" do
-      post "/apps", {:name => "app_test",:url => ""};
+      post "/apps", {:application => {:name => "app_test",:url => ""}};
       last_response.status.should == 200;
       settings.form_errors.should == {:url => settings.ERROR_FORM_ANY_URL};
     end
     it "should print again this page if an error occurred (any params)" do
-      post "/apps", {:name => "",:url => ""};
+      post "/apps", {:application => {:name => "",:url => ""}};
       last_response.status.should == 200;
       settings.form_errors.should == {
         :name => settings.ERROR_FORM_ANY_NAME,
@@ -348,7 +356,7 @@ describe "With session" do
     it "should print again this page if an error occurred (app already exists)" do
       Application.create!({:name => "app_test",:url => "http://url", :admin => 1});
       ActiveRecordHooks.should_receive(:valid?).and_return(false);
-      post "/apps", {:name => "app_test",:url => "http://url"};
+      post "/apps", {:application => {:name => "app_test",:url => "http://url"}};
       last_response.status.should == 200;
       settings.form_errors.should == {
         :name => settings.ERROR_FORM_BAD_NAME,
@@ -357,7 +365,7 @@ describe "With session" do
     end
     it "should redirect to protected area after a new app was created" do
       ActiveRecordHooks.should_receive(:valid?).and_return(true);
-      post "/apps", {:name => "app_test",:url => "http://url"};
+      post "/apps", {:application => {:name => "app_test",:url => "http://url"}};
       last_response.status.should == 302;
       follow_redirect!;
       last_request.path.should == "/users/#{@tmp_id}";

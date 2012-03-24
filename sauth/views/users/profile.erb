@@ -2,15 +2,15 @@
 <html>
 	<head>
 		<title>SAuth | Zone prot&eacute;g&eacute;e</title>
-		<%= settings.stylesheet; %>
+		<link rel="stylesheet" type="text/css" href="http://sauth:<%= settings.port; %>/style.css" />
 	</head>
 	<body>
 		<center>
 			<div id="bann">
 				<div id="bann_content">
 					<span id="logo">vincentbook</span>
-					<span class="logout">Bienvenue <%= session[:s_user]; %> <span style="margin: 3px;">|</span> <a href="/sessions/<%= session[:s_id]; %>" onclick="document.forms['session_del'].submit(); return false;">Deconnexion</a></span>
-					<form style="display: none;" id="session_del" action="/sessions/<%= session[:s_id]; %>" method="post"><input name="_method" type="hidden" value="delete" /><input type="submit" /></form>
+					<span class="logout">Bienvenue <%= user_name; %> <span style="margin: 3px;">|</span> <a href="/sessions/<%= user_id; %>" onclick="document.forms['session_del'].submit(); return false;">Deconnexion</a></span>
+					<form style="display: none;" id="session_del" action="/sessions/<%= user_id; %>" method="post"><input name="_method" type="hidden" value="delete" /><input type="submit" /></form>
 				</div>
 			</div>
 			<h1>Zone prot&eacute;g&eacute;e</h1>

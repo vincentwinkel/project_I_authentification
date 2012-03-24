@@ -23,9 +23,9 @@ class Application < ActiveRecord::Base
   
   #Check if attributes are correctly defined
   validates :name, :presence => true;
-  validates :name, :uniqueness => true;
-  validates :url, :uniqueness => true;
-  validates :url, :format => { :with => /^http:\/\/[^\s]+$/i, :on => :create };
+  validates :name, :uniqueness => {:case_sensitive => false};
+  validates :url, :uniqueness => {:case_sensitive => false};
+  validates :url, :format => {:with => /^http:\/\/[^\s]+$/i,:on => :create};
   validates :admin, :presence => true;
-  validates :admin, :numericality => { :only_integer => true };
+  validates :admin, :numericality => {:only_integer => true};
 end

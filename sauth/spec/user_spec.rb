@@ -19,6 +19,10 @@ describe User do
     @u.password="mdp";
     @u.password.should == @crypt;
   end
+  it "should compare password with equal string" do
+    @u.password="mdp";
+    @u.has_password("mdp").should be_true;
+  end
   it "should be invalid (any login)" do
     @u.password="mdp";
     @u.valid?.should be_false;
@@ -28,7 +32,7 @@ describe User do
     @u.valid?.should be_false;
   end
   it "should be invalid (login already exists)" do
-    @u.login="login_test";
+    @u.login="Login_test";
     @u.password="mdp";
     @u.save!;
     @u=User.new({:login => "login_test",:password => "mdp"});

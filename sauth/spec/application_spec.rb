@@ -42,7 +42,7 @@ describe Application do
     @a.valid?.should be_false;
   end
   it "should be invalid (name already exists)" do
-    @a.name="app_test";
+    @a.name="App_test";
     @a.url="http://url1";
     @a.admin=123;
     @a.save!;

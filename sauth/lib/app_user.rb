@@ -54,7 +54,7 @@ class AppUser < ActiveRecord::Base
   
   #Check if attributes are correctly defined
   validates :application_id, :presence => true;
-  validates :application_id, :numericality => { :only_integer => true };
+  validates :application_id, :numericality => {:only_integer => true};
   validates :user_id, :presence => true;
-  validates :user_id, :numericality => { :only_integer => true };
+  validates :user_id, :numericality => {:only_integer => true};
 end

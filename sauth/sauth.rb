@@ -31,9 +31,6 @@ set :ERROR_FORM_BAD_NAME, "Nom indisponible et / ou";
 set :ERROR_FORM_ANY_URL, "Url manquante (http://votre_application)";
 set :ERROR_FORM_BAD_URL, "Url indisponible";
 
-set :stylesheet, "<link rel=\"stylesheet\" type=\"text/css\" href=" \
-  "\"http://sauth:#{settings.port}/style.css\" />"; #Stylesheet
-
 set :logger, Logger.new(File.dirname(__FILE__) + "/logs/raw","weekly"); #Logs
 #Disable logs for tests
 settings.logger.level=(ENV["RACK_ENV"] == "test")?(Logger::DEBUG):(Logger::WARN);
@@ -65,12 +62,10 @@ helpers do
     session[:s_id]=u.id;
   end
   
-  #Destroy a user session
+  #Destroy current session
   def destroy_session
     session[:s_user]=nil;
     session[:s_id]=nil;
-    #session.delete([:s_user]);
-    #session.delete([:s_id]);
   end
   
   #Setting external app
@@ -85,13 +80,26 @@ helpers do
     settings.s_apps_admin.replace(Application.get_apps_for_admin(id));
   end
   
-  #Return true if user session exists, else false
-  def is_connected?
+  #Return current user name
+  def user_name
     session[:s_user];
   end
   
+  #Return current user ID
+  def user_id
+    session[:s_id];
+  end
+  
+  #Return true if user session exists, else false
+  def is_connected?
+    user_name; #|| eventual future cookies
+  end
+  
   #Check a result of a session form (conf = true if password_conf is given)
-  def checkSessionForm(login,password,password_conf,conf)
+  def checkSessionForm(params,conf)
+    login=params[:user][:login];
+    password=params[:user][:password];
+    password_conf=params[:password_confirmation];
     error=false; #true if an error occurred, else false
     clearFormHash;
     if (is_empty(login)) then
@@ -103,21 +111,18 @@ helpers do
     if (is_empty(password)) then
       settings.form_errors[:password]=settings.ERROR_FORM_ANY_PASS;
       error=true;
-    else
-      #No keep password for security
-      if ((conf == true) && ((is_empty(password_conf)) || (password != password_conf))) then
-        settings.form_errors[:password]="";
-        settings.form_errors[:password_confirmation]=settings.ERROR_FORM_BAD_PASS_CONFIRM;
-        error=true;
-      else
-        #No keep password confirmation for security
-      end
+    elsif ((conf == true) && ((is_empty(password_conf)) || (password != password_conf))) then
+      settings.form_errors[:password]="";
+      settings.form_errors[:password_confirmation]=settings.ERROR_FORM_BAD_PASS_CONFIRM;
+      error=true;
     end
     error;
   end
   
   #Check a result of an app form
-  def checkAppForm(name,url)
+  def checkAppForm(params)
+    name=params[:application][:name];
+    url=params[:application][:url];
     error=false; #true if an error occurred, else false
     clearFormHash;
     if (is_empty(name)) then
@@ -154,7 +159,7 @@ get %r{^/apps/new$}i do
     redirect "/sessions/new";
   #Else, print app inscription page
   else
-    erb :"apps/new", :locals => {:form_errors => Hash.new,:form_values => Hash.new};
+    erb :"apps/new";
   end
 end
 
@@ -162,10 +167,10 @@ end
 get %r{^/users/new$}i do
   #If session exists, redirect to protected area
   if (is_connected?) then
-    redirect "/users/#{session[:s_id]}";
+    redirect "/users/#{user_id}";
   #Else, print user inscription page
   else
-    erb :"users/new", :locals => {:form_errors => Hash.new,:form_values => Hash.new};
+    erb :"users/new";
   end
 end
 
@@ -173,7 +178,7 @@ end
 get %r{^/users/(\d+)$}i do |id|
   id=id.to_i;
   #If session exists, print protected area
-  if ((is_connected?) && (id == session[:s_id])) then
+  if ((is_connected?) && (id == user_id)) then
     #Check session apps
     use_apps(id);
     #Print protected area
@@ -188,32 +193,31 @@ end
 get %r{^/sessions/new$}i do
   #If session exists, redirect to protected area
   if (is_connected?) then
-    redirect "/users/#{session[:s_id]}";
+    redirect "/users/#{user_id}";
   #Else, print connection page
   else
     set_external_app(nil,0);
-    erb :"sessions/new", :locals => {:form_errors => Hash.new,:form_values => Hash.new};
+    erb :"sessions/new";
   end
 end
 
 ##### From an external app
 
-#Connection link from an other app
-get %r{^/(\d+)/sessions/new$}i do |application_id|
-  application_id=application_id.to_i;
-  a=Application.find_by_id(application_id);
-  #If any app exists, print error
-  if ((a.nil?) || (is_empty(params[:ref]))) then
+#User connection link from an other app
+get %r{^/(\d+)/sessions/new$}i do |aid|
+  a=Application.find_by_id(aid);
+  #If app doesn't exist, print error
+  if (!a) then
     erb :"apps/error";
   #Else, continue procedure
   else
     if (is_connected?) then
-      AppUser.add_user_for_app(a.id,session[:s_id]);
-      redirect "#{a.url}#{params[:ref]}?login=#{session[:s_user]}&key=sauth4567";
+      AppUser.add_user_for_app(a.id,user_id);
+      redirect "#{a.url}#{params[:ref]}?login=#{user_name}&key=sauth4567";
     #Else, print the connection page
     else
       set_external_app("#{a.url}#{params[:ref]}",a.id);
-      erb :"sessions/new", :locals => {:form_errors => Hash.new,:form_values => Hash.new};
+      erb :"sessions/new";
     end
   end
 end
@@ -238,15 +242,14 @@ delete %r{^/apps/(\d+)$}i do |id|
     AppUser.delete_for_app(id);
   end
   #Redirect to protected area
-  redirect "/users/#{session[:s_id]}";
+  redirect "/users/#{user_id}";
 end
 
 #Deconnection link
 delete %r{^/sessions/(\d+)$}i do |id|
-  id=id.to_i;
   #If session exists, delete it
-  if ((is_connected?) && (id == session[:s_id])) then
-    settings.logger.info("[Disconnection] User \##{session[:s_id]}: #{session[:s_user]}");
+  if ((is_connected?) && (id.to_i == user_id)) then
+    settings.logger.info("[Disconnection] User \##{user_id}: #{user_name}");
     destroy_session;
   end
   #Redirect to connection page
@@ -265,30 +268,24 @@ post %r{^/apps$}i do
     return;
   end
   #Check form errors
-  error=checkAppForm(params[:name],params[:url]);
+  error=checkAppForm(params);
   #If error occurred, print page
   if (error) then
-    erb :"apps/new", :locals => {
-      :form_errors => settings.form_errors,
-      :form_values => settings.form_values
-    };
+    erb :"apps/new";
   #Else if any error, check the validity of the app
   else
-    name=params[:name].downcase;
-    a=Application.new({:name => name,:url => params[:url],:admin => session[:s_id]});
+    a=Application.new(params[:application]);
+    a.admin=user_id;
     #If it's good, validate the add
     if (ActiveRecordHooks.valid?(a)) then
       ActiveRecordHooks.save(a);
       settings.logger.info("[New app] App \##{a.id}: #{a.name} (#{a.url})");
-      redirect "/users/#{session[:s_id]}";
+      redirect "/users/#{user_id}";
     #Else, the app name or app url already exists
     else
       settings.form_errors[:name]=settings.ERROR_FORM_BAD_NAME;
       settings.form_errors[:url]=settings.ERROR_FORM_BAD_URL;
-      erb :"apps/new", :locals => {
-        :form_errors => settings.form_errors,
-        :form_values => settings.form_values
-      };
+      erb :"apps/new";
     end
   end
 end
@@ -296,32 +293,23 @@ end
 #Inscription form
 post %r{^/users$}i do
   #Check form errors
-  error=checkSessionForm(params[:login],params[:password],params[:password_confirmation],true);
+  error=checkSessionForm(params,true);
   #If error occurred, print page
   if (error) then
-    erb :"users/new", :locals => {
-      :form_errors => settings.form_errors,
-      :form_values => settings.form_values
-    };
+    erb :"users/new";
   #Else if any error, check the validity of the account
   else
-    login=params[:login].downcase;
-    u=User.new({:login => login,:password => params[:password]});
+    u=User.new(params[:user]);
     #If it's good, validate the inscription
-    #if (User.valid?(u)) then
-    #  User.save(u);
     if (ActiveRecordHooks.valid?(u)) then
       ActiveRecordHooks.save(u);
-      create_session(login);
-      settings.logger.info("[Inscription] User \##{u.id}: #{u.login}");
-      redirect "/users/#{session[:s_id]}";
+      create_session(u.login);
+      settings.logger.info("[Inscription] User \##{user_id}: #{user_name}");
+      redirect "/users/#{user_id}";
     #Else, the login already exists
     else
       settings.form_errors[:login]=settings.ERROR_FORM_BAD_LOGIN;
-      erb :"users/new", :locals => {
-        :form_errors => settings.form_errors,
-        :form_values => settings.form_values
-      };
+      erb :"users/new";
     end
   end
 end
@@ -338,36 +326,29 @@ end
 
 def connectResponse(params,ok_url,local)
   #Check form errors
-  error=checkSessionForm(params[:login],params[:password],nil,false);
+  error=checkSessionForm(params,false);
   #If error occurred, print page
   if (error) then
-    erb :"sessions/new", :locals => {
-      :form_errors => settings.form_errors,
-      :form_values => settings.form_values
-    };
+    erb :"sessions/new";
   #Else if any error, check the validity of the account
   else
-    login=params[:login].downcase;
-    u=User.find_by_login(login);
+    u=User.find_by_login(params[:user][:login]);
     #If it's good, validate the connection
-    if ((u) && (u.password == User.encrypt(params[:password]))) then
-      create_session(login);
+    if ((u) && (u.has_password(params[:user][:password]))) then
+      create_session(params[:user][:login]);
       if (local) then
         settings.logger.info("[Local connection] User \##{u.id}: #{u.login}");
-        ok_url["USER_ID"]=session[:s_id].to_s;
+        ok_url["USER_ID"]=user_id.to_s;
       else
-        settings.logger.info("[External onnection] User \##{u.id}: #{u.login}");
-        ok_url["USER_LOGIN"]=session[:s_user];
+        settings.logger.info("[External connection] User \##{u.id}: #{u.login}");
+        ok_url["USER_LOGIN"]=user_name;
         AppUser.add_user_for_app(params[:aid].to_i,u.id);
       end
       redirect ok_url;
     #Else, the login no exists
     else
       settings.form_errors[:login]=settings.ERROR_FORM_NO_LOGIN;
-      erb :"sessions/new", :locals => {
-        :form_errors => settings.form_errors,
-        :form_values => settings.form_values
-      };
+      erb :"sessions/new";
     end
   end
 end

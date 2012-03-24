@@ -22,8 +22,13 @@ class User < ActiveRecord::Base
     end
   end
   
+  #Compare password
+  def has_password(mdp)
+    (read_attribute(:password) == User.encrypt(mdp));
+  end
+  
   #Check if attributes are correctly defined
   validates :login, :presence => true;
-  validates :login, :uniqueness => true;
-  validates :password, :format => { :with => /^[a-z0-9]{40}$/i, :on => :create };
+  validates :login, :uniqueness => {:case_sensitive => false};
+  validates :password, :format => {:with => /^[a-z0-9]{40}$/i,:on => :create};
 end

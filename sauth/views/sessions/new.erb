@@ -2,10 +2,10 @@
 <html>
 	<head>
 		<title>SAuth | Connexion</title>
-		<%= settings.stylesheet; %>
-<% if (form_errors.size == 0) %>
+		<link rel="stylesheet" type="text/css" href="http://sauth:<%= settings.port; %>/style.css" />
+<% if (settings.form_errors.size == 0) %>
 		<script type="text/javascript" language="javascript">
-			window.onload=function(){document.getElementById("name").focus();};
+			window.onload=function(){document.getElementById("login").focus();};
 		</script>
 <% end %>
 	</head>
@@ -30,15 +30,15 @@
 						<tr>
 							<td><label for="login">Pseudonyme : </label></td>
 							<td>
-								<input<% if (!is_empty(form_errors[:login])) then %> class="error"<% end %> type="text" id="login" name="login" size="30" value="<%= form_values[:login]; %>" />
-								<% if (!is_empty(form_errors[:login])) then %><span class="msg_error"><%= form_errors[:login]; %></span><% end %>
+								<input<% if (!is_empty(settings.form_errors[:login])) then %> class="error"<% end %> type="text" id="login" name="login" size="30" value="<%= settings.form_values[:login]; %>" />
+								<% if (!is_empty(settings.form_errors[:login])) then %><span class="msg_error"><%= settings.form_errors[:login]; %></span><% end %>
 							</td>
 						</tr>
 						<tr>
 							<td><label for="password">Mot de passe : </label></td>
 							<td>
-								<input<% if (!is_empty(form_errors[:password])) then %> class="error"<% end %> type="password" id="password" name="password" size="30" />
-								<% if (!is_empty(form_errors[:password])) then %><span class="msg_error"><%= form_errors[:password]; %></span><% end %>
+								<input<% if (!is_empty(settings.form_errors[:password])) then %> class="error"<% end %> type="password" id="password" name="password" size="30" />
+								<% if (!is_empty(settings.form_errors[:password])) then %><span class="msg_error"><%= settings.form_errors[:password]; %></span><% end %>
 							</td>
 						</tr>
 						<tr><td></td><td><input type="submit" name="commit" value="Valider" /></td></tr>
