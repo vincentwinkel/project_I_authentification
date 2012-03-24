@@ -1,6 +1,6 @@
+require_relative 'spec_helper';
 require 'rack/test';
 require_relative '../sauth';
-require_relative 'spec_helper';
 include Rack::Test::Methods;
 
 def app
@@ -350,7 +350,10 @@ describe "With session" do
       ActiveRecordHooks.should_receive(:valid?).and_return(false);
       post "/apps", {:name => "app_test",:url => "http://url"};
       last_response.status.should == 200;
-      settings.form_errors.should == {:name => settings.ERROR_FORM_BAD_NAME};
+      settings.form_errors.should == {
+        :name => settings.ERROR_FORM_BAD_NAME,
+        :url => settings.ERROR_FORM_BAD_URL
+      };
     end
     it "should redirect to protected area after a new app was created" do
       ActiveRecordHooks.should_receive(:valid?).and_return(true);
