@@ -11,8 +11,8 @@
 - Modèle (./sauth/lib)
 - Vue (./sauth/views)
 - Contrôleur (./sauth/sauth.rb)
-- Bades de données SQLite (test RSpec + développement)
-- Tests unitaire et d'intégration (./sauth/spec)
+- Bases de données SQLite (test RSpec + développement)
+- Tests unitaires et d'intégration (./sauth/spec)
 
 
 # Philosophie de codage
@@ -21,20 +21,20 @@
 Les classes du modèle se doivent d'être possiblement les plus indépendantes les
 unes des autres. Elles sont donc soumises à des tests unitaires.
 La classe du contrôleur est soumise à des tests d'intégration avec le modèle.
-Elle se doit également d'être la plus indépendante possible des couchers
+Elle se doit également d'être la plus indépendante possible des couches
 inférieures (Sinatra et ActiveRecord).
 Cela signifie la présence de hooks et justifie certains choix de conception qui
 peuvent alourdir le code du contrôleur.
 
 Côté Web, l'application est soumise, de manière allégée, aux standards de
 sécurité (NTUI/FIEO), afin de pouvoir facilement l'adapter à des situations
-réelles d'utilisation.
+réelles d'utilisation, bien que le jeton d'anti-rejeu ne soit pas implémenté.
 
 
 # Pré-requis pour les tests
 # --------------------------------------------
 
-Il est nécessaire de modifier le fichier /etc/host de votre machine, en ajoutant
+Il est nécessaire de modifier le fichier /etc/hosts de votre machine, en ajoutant
 ces 2 lignes :
 127.0.0.1 sauth
 127.0.0.1 appli
@@ -57,7 +57,8 @@ Note: exécutez "./all_spec doc" pour activer le format "documentation" de RSpec
 # Tests réels ($env="development")
 # --------------------------------------------
 
-(Le terme "sauth" représente le service d'authentification).
+(Le terme "sauth" représente le service d'authentification et '.' symbolise le
+répertoire racine du projet).
 La Base de données étant vide, il faut commencer par la remplir.
 
 ## Lancement du service d'authentification
