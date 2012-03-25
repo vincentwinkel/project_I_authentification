@@ -30,14 +30,14 @@
 						<tr>
 							<td><label for="login">Pseudonyme : </label></td>
 							<td>
-								<input<% if (!is_empty(settings.form_errors[:login])) then %> class="error"<% end %> type="text" id="login" name="login" size="30" value="<%= settings.form_values[:login]; %>" />
+								<input<% if (!is_empty(settings.form_errors[:login])) then %> class="error"<% end %> type="text" id="login" name="user[login]" size="30" value="<%= settings.form_values[:login]; %>" />
 								<% if (!is_empty(settings.form_errors[:login])) then %><span class="msg_error"><%= settings.form_errors[:login]; %></span><% end %>
 							</td>
 						</tr>
 						<tr>
 							<td><label for="password">Mot de passe : </label></td>
 							<td>
-								<input<% if (!is_empty(settings.form_errors[:password])) then %> class="error"<% end %> type="password" id="password" name="password" size="30" />
+								<input<% if (!is_empty(settings.form_errors[:password])) then %> class="error"<% end %> type="password" id="password" name="user[password]" size="30" />
 								<% if (!is_empty(settings.form_errors[:password])) then %><span class="msg_error"><%= settings.form_errors[:password]; %></span><% end %>
 							</td>
 						</tr>

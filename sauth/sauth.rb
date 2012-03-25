@@ -159,6 +159,7 @@ get %r{^/apps/new$}i do
     redirect "/sessions/new";
   #Else, print app inscription page
   else
+    clearFormHash;
     erb :"apps/new";
   end
 end
@@ -170,6 +171,7 @@ get %r{^/users/new$}i do
     redirect "/users/#{user_id}";
   #Else, print user inscription page
   else
+    clearFormHash;
     erb :"users/new";
   end
 end
@@ -196,6 +198,7 @@ get %r{^/sessions/new$}i do
     redirect "/users/#{user_id}";
   #Else, print connection page
   else
+    clearFormHash;
     set_external_app(nil,0);
     erb :"sessions/new";
   end
@@ -216,6 +219,7 @@ get %r{^/(\d+)/sessions/new$}i do |aid|
       redirect "#{a.url}#{params[:ref]}?login=#{user_name}&key=sauth4567";
     #Else, print the connection page
     else
+      clearFormHash;
       set_external_app("#{a.url}#{params[:ref]}",a.id);
       erb :"sessions/new";
     end
