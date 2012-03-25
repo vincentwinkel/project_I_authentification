@@ -135,8 +135,8 @@ Cependant, vous pouvez supprimer vos propres applications.
 - Supprimez l'application 1 depuis votre profil sauth en cliquant sur la croix
   puis en validant le popup javascript.
 - Cela rafraichit votre profil sauth en ayant supprimé l'application 1 non
-  seulement dans la liste
-  de vos applications mais également dans la liste de celles que vous utilisez.
+  seulement dans la liste de vos applications mais également dans la liste de
+  celles que vous utilisez.
 - Retournez sur l'application 1. Déconnectez-vous et reconnectez-vous via le
   lien de connexion.
 - Vous êtes redirigé vers une page d'erreur du sauth précisant que l'application
@@ -144,17 +144,15 @@ Cependant, vous pouvez supprimer vos propres applications.
 
 ## Changement de session
 - Déconnectez-vous de l'application 2, si ce n'est pas déjà fait.
-- Déconnectez-vous et créez un nouvel utilisateur sur le sauth
+- Déconnectez-vous du sauth et créez un nouvel utilisateur sur le sauth
 - Connectez-vous sur l'application 2.
-- Vous êtes redirigé sur la page de connexion du sauth, affichant l'URL de
-  l'application sur
-  laquelle vous souhaitez vous connecter.
-- Indiquez votre nouveau login + mot de passe. Vous êtes redirigé vers votre
-  profil de l'application 2 avec le login de votre nouveau profil du sauth.
+- Vous êtes maintenant connecté sur l'application 2 avec le login de votre nouveau
+  login du sauth.
 
 
 # Rejeu des tests
 # --------------------------------------------
+
 Le choix de conception qui est de traiter un élément (utilisateur ou
 application) avec son ID et non son nom fait qu'il n'est pas possible de rejouer
 les tests de création/suppression d'application plus d'une fois sans modifier le
@@ -165,8 +163,8 @@ L'application 1 a par défaut le port 9191 et l'appID 1.
 L'application 2 a par défaut le port 9292 et l'appID 2.
 
 Vous pouvez donc :
-- Réintialiser les BDD en exécutant le script "./reset_db.sh" depuis ./sauth
-  (si cela ne échoue, effacer le fichier BDD ./sauth/auth_dev.sqlite3 et
+- Réinitialiser les BDD en exécutant le script "./reset_db.sh" depuis ./sauth
+  (si cela échoue, effacer le fichier BDD ./sauth/auth_dev.sqlite3 et
   effectuer une nouvelle migration en exécuant"ruby migration.rb" depuis
   ./sauth).
   Mais cela supprimera également les utilisateurs enregistrés.
