@@ -12,6 +12,10 @@ describe "Without session" do
     User.destroy_all;
     Application.destroy_all;
     @crypt="00d70c561892a94980befd12a400e26aeb4b8599";
+    @user=User.new({:login => "login_test",:password => "mdp"});
+    @user.stub(:id).and_return(1);
+    User.stub(:new).and_return(@user);
+    User.stub(:find_by_login).and_return(@user);
   end
   #############################
   describe "Default page" do
@@ -75,8 +79,7 @@ describe "Without session" do
       };
     end
     it "should print again this page if an error occurred (account already exists)" do
-      u=User.create!({:login => "login_test",:password => "mdp"});
-      ActiveRecordHooks.should_receive(:valid?).and_return(false);
+      @user.stub(:valid?).and_return(false);
       post "/users", {
         :user => {:login => "login_test",:password => "mdp"},
         :password_confirmation => "mdp"
@@ -85,7 +88,9 @@ describe "Without session" do
       settings.form_errors.should == {:login => settings.ERROR_FORM_BAD_LOGIN};
     end
     it "should redirect to the protected area (any error)" do
-      ActiveRecordHooks.should_receive(:valid?).and_return(true);
+      @user.stub(:valid?).and_return(true);
+      @user.stub(:save).and_return(true);
+      @user.should_receive(:save);
       post "/users", {
         :user => {:login => "login_test",:password => "mdp"},
         :password_confirmation => "mdp"
@@ -124,48 +129,48 @@ describe "Without session" do
         };
       end
       it "should print again this page if an error occurred (account no exists)" do
-        User.should_receive(:find_by_login).and_return(nil);
+        User.stub(:find_by_login).and_return(nil);
         post "/sessions", {:user => {:login => "User_no_exists",:password => "mdp"}};
         last_response.status.should == 200;
         settings.form_errors.should == {:login => settings.ERROR_FORM_NO_LOGIN};
       end
       it "should redirect to the protected area (any error)" do
-        User.should_receive(:encrypt).with("mdp").at_least(1).and_return(@crypt);
-        u=User.create!({:login => "login_test",:password => "mdp"});
+        User.stub(:find_by_login).and_return(@user);
         post "/sessions", {:user => {:login => "login_test",:password => "mdp"}};
         last_response.status.should == 302;
         follow_redirect!;
-        last_request.path.should == "/users/#{u.id}";
+        last_request.path.should == "/users/#{@user.id}";
         last_request.session[:s_user].should == "login_test";
         last_request.session[:s_id].should > 0;
       end
     end
     describe "from an existing external app" do
       before(:each) do
-        @u=User.create!({:login => "login_test",:password => "mdp"});
-        @tmp_id=@u.id;
-        @a=Application.create!({:name => "app_test",:url => "http://url",:admin => 1});
-        @tmp_aid=@a.id;
+        @user.stub(:valid?).and_return(false);
+        @app=Application.new({:name => "app_test",:url => "http://url"});
+        @app.stub(:id).and_return(1);
+        Application.stub(:new).and_return(@app);
+        @app.stub(:valid?).and_return(false);
       end
       it "should print the page" do
-        get "/#{@tmp_aid}/sessions/new?ref=/test";
+        get "/#{@app.id}/sessions/new?ref=/test";
         last_response.status.should == 200;
       end
       it "should print again the page (bad params)" do
         post "/apps/sessions", {
           :user => {:login => "",:password => ""},
           :origin => "http://url/test",
-          :aid => @tmp_aid
+          :aid => @app.id
         };
         last_response.status.should == 200;
         settings.origin.should == "http://url/test";
       end
       it "should redirect to the original link (good params)" do
-        AppUser.should_receive(:add_user_for_app).with(@tmp_aid,@tmp_id);
+        AppUser.should_receive(:add_user_for_app).with(@app.id,@user.id);
         post "/apps/sessions", {
           :user => {:login => "login_test",:password => "mdp"},
           :origin => "http://url/test",
-          :aid => @tmp_aid
+          :aid => @app.id
         };
         last_response.status.should == 302;
         follow_redirect!;
@@ -184,7 +189,7 @@ describe "Without session" do
   describe "Deconnection page" do
   #############################
     it "should redirect to the connection page" do
-      delete "/sessions/1";
+      delete "/sessions/0";
       last_response.status.should == 302;
       follow_redirect!;
       last_request.path.should == "/sessions/new";
@@ -196,7 +201,7 @@ describe "Without session" do
   describe "Protected area" do
   #############################
     it "should redirect to the connection page" do
-      get "/users/1";
+      get "/users/0";
       last_response.status.should == 302;
       follow_redirect!;
       last_request.path.should == "/sessions/new";
@@ -354,8 +359,9 @@ describe "With session" do
       };
     end
     it "should print again this page if an error occurred (app already exists)" do
-      Application.create!({:name => "app_test",:url => "http://url", :admin => 1});
-      ActiveRecordHooks.should_receive(:valid?).and_return(false);
+      app=Application.new({:name => "app_test",:url => "http://url", :admin => 1});
+      Application.stub(:new).and_return(app);
+      app.stub(:valid?).and_return(false);
       post "/apps", {:application => {:name => "app_test",:url => "http://url"}};
       last_response.status.should == 200;
       settings.form_errors.should == {
@@ -364,7 +370,11 @@ describe "With session" do
       };
     end
     it "should redirect to protected area after a new app was created" do
-      ActiveRecordHooks.should_receive(:valid?).and_return(true);
+      app=Application.new({:name => "app_test",:url => "http://url", :admin => 1});
+      Application.stub(:new).and_return(app);
+      app.stub(:valid?).and_return(true);
+      app.stub(:save).and_return(true);
+      Application.stub(:get_apps_for_admin).and_return({[1] => ["app_test","http://url"]});
       post "/apps", {:application => {:name => "app_test",:url => "http://url"}};
       last_response.status.should == 302;
       follow_redirect!;

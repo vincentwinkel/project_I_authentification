@@ -281,8 +281,8 @@ post %r{^/apps$}i do
     a=Application.new(params[:application]);
     a.admin=user_id;
     #If it's good, validate the add
-    if (ActiveRecordHooks.valid?(a)) then
-      ActiveRecordHooks.save(a);
+    if (a.valid?) then
+      a.save;
       settings.logger.info("[New app] App \##{a.id}: #{a.name} (#{a.url})");
       redirect "/users/#{user_id}";
     #Else, the app name or app url already exists
@@ -305,8 +305,8 @@ post %r{^/users$}i do
   else
     u=User.new(params[:user]);
     #If it's good, validate the inscription
-    if (ActiveRecordHooks.valid?(u)) then
-      ActiveRecordHooks.save(u);
+    if (u.valid?) then
+      u.save;
       create_session(u.login);
       settings.logger.info("[Inscription] User \##{user_id}: #{user_name}");
       redirect "/users/#{user_id}";
