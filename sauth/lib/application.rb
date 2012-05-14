@@ -1,7 +1,7 @@
-require_relative 'active_record_hooks';
+#require_relative 'active_record_hooks';
 
 class Application < ActiveRecord::Base
-  include ActiveRecordHooks;
+  #include ActiveRecordHooks;
   
   #Link with apps table
   has_many :app_users;

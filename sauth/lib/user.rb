@@ -1,8 +1,8 @@
 require 'digest/sha1';
-require_relative 'active_record_hooks';
+#require_relative 'active_record_hooks';
 
 class User < ActiveRecord::Base
-  include ActiveRecordHooks;
+  #include ActiveRecordHooks;
   
   #Link with apps table
   has_many :app_users;
